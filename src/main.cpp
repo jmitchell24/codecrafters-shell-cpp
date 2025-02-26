@@ -15,7 +15,7 @@ void cmdExit(arglist_t const& args)
 {
     int code = EXIT_FAILURE;
 
-    if (args.size() != 1)
+    if (args.size() == 1)
     {
         auto&& a = args[0];
         from_chars(a.begin(), a.end(), code);
@@ -24,26 +24,30 @@ void cmdExit(arglist_t const& args)
     exit(code);
 }
 
-void parseCommand(arglist_t const& args)
+bool parseCommand(arglist_t const& args)
 {
     if (args.empty())
-        return;
+        return false;
 
     auto&& command = args[0];
     if (command == "exit"_sv)
     {
         cmdExit(args.subspan(1));
+        return true;
     }
-    else
-    {
 
-    }
+
+    return false;
 }
 
-void parseText(cstrparam s)
+void parseUserInput(strparam s)
 {
     auto args = trimsplit::containerWS(s);
-    parseCommand(args);
+
+    if (!parseCommand(args))
+    {
+        printf("%.*s: invalid command\n", s.size(), s.data());
+    }
 }
 
 int main()
@@ -60,8 +64,9 @@ int main()
             return EXIT_FAILURE;
         }
 
-        auto user_input = cstrview(buffer.data()).trim();
-        printf("%.*s: command not found\n", user_input.size(), user_input.data());
+        auto user_input = strview(buffer.data(), strlen(buffer.data())-1);
+
+        parseUserInput(user_input);
 
     }
 
