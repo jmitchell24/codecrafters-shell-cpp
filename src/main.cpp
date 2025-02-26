@@ -46,7 +46,7 @@ void parseUserInput(strparam s)
 
     if (!parseCommand(args))
     {
-        printf("%.*s: invalid command\n", s.size(), s.data());
+        printf("%.*s: command not found\n", s.size(), s.data());
     }
 }
 
