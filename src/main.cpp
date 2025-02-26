@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <span>
 #include <charconv>
+#include <array>
 
 using namespace std;
 
@@ -47,21 +48,23 @@ void parseText(cstrparam s)
 
 int main()
 {
+    array<char, 1000> buffer{};
 
-    constexpr size_t BUFFER_SIZE = 2048;
-    char buffer[BUFFER_SIZE];
-
-    printf("$ ");
-
-    if (fgets(buffer, BUFFER_SIZE, stdin) == nullptr)
+    while (true)
     {
-        printf("something went wrong...\n");
-        return EXIT_FAILURE;
+        printf("$ ");
+
+        if (fgets(buffer.data(), buffer.size(), stdin) == nullptr)
+        {
+            printf("something went wrong...\n");
+            return EXIT_FAILURE;
+        }
+
+        auto user_input = cstrview(buffer.data()).trim();
+        printf("%.*s: command not found\n", user_input.size(), user_input.data());
+
     }
 
-    auto user_input = cstrview(buffer).trim();
-
-    printf("%.*s: command not found\n", user_input.size(), user_input.begin());
 
     return EXIT_SUCCESS;
 
