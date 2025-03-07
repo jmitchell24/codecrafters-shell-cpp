@@ -14,6 +14,7 @@ class Scanner
 public:
     strview takeToken()
     {
+        // find beginning of token
         size_t i = m_offset;
         for (; i < m_text.size(); ++i)
         {
@@ -21,6 +22,7 @@ public:
                 break;
         }
 
+        // find end of token
         size_t j = i;
         for (; j < m_text.size(); ++j)
         {
@@ -29,14 +31,29 @@ public:
         }
 
         m_offset = j;
-        return m_text.withIndices(i, j);
+        return m_text.withIndices(i, m_offset);
     }
 
     strview takeAll()
     {
-        auto s = m_text.skipBegin(m_offset);
-        m_offset = s.size();
-        return s;
+        // find beginning of first token
+        size_t i = m_offset;
+        for (; i < m_text.size(); ++i)
+        {
+            if (istoken(m_text[i]))
+                break;
+        }
+
+        // find end of last token
+        size_t j = m_text.size()-1;
+        for (; j > i; --j)
+        {
+            if (istoken(m_text[j]))
+                break;
+        }
+
+        m_offset = j+1;
+        return m_text.withIndices(i, m_offset);
     }
 
     Scanner(strparam s)
