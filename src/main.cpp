@@ -3,10 +3,12 @@
 #include <span>
 #include <charconv>
 #include <array>
+#include <print>
 
 using namespace std;
 
 #include <ut/string.hpp>
+#include <ut/check.hpp>
 using namespace ut;
 
 class Scanner
@@ -73,6 +75,69 @@ private:
     }
 };
 
+
+enum BuiltinKind
+{
+    BUILTIN_EXIT, BUILTIN_ECHO, BUILTIN_TYPE
+};
+
+struct Builtin;
+
+struct Builtin
+{
+    using fn_type = void(*)(Builtin const&, Scanner&);
+
+    BuiltinKind kind;
+    fn_type     fn;
+
+    cstrview    name;
+    cstrview    desc;
+
+};
+
+void fnExit(Builtin const& b, Scanner& s);
+void fnEcho(Builtin const& b, Scanner& s);
+void fnType(Builtin const& b, Scanner& s);
+
+array<Builtin, 3> static const BUILTINS =
+{
+    Builtin{ BUILTIN_EXIT, &fnExit, "exit", "exit is a shell builtin"_sv },
+    Builtin{ BUILTIN_ECHO, &fnEcho, "echo", "echo is a shell builtin"_sv },
+    Builtin{ BUILTIN_TYPE, &fnType, "type", "type is a shell builtin"_sv }
+};
+
+void fnExit(Builtin const& b, Scanner& s)
+{
+    auto arg = s.takeAll().trim();
+    int code = 0;
+
+    if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
+        cout << "warning: invalid exit code '" << arg << "\'\n";
+    exit(code);
+}
+
+void fnEcho(Builtin const& b, Scanner& s)
+{
+    auto arg = s.takeAll();
+    cout << arg << "\n";
+}
+
+void fnType(Builtin const& b, Scanner& s)
+{
+    auto arg = s.takeAll().trim();
+
+    for (auto&& b: BUILTINS)
+    {
+        if (arg == b.name)
+        {
+            cout << b.desc << endl;
+            return;
+        }
+    }
+
+    cout << arg << ": not found" << endl;
+}
+
 void parseUserInput(strparam s)
 {
     Scanner scanner{s};
@@ -80,24 +145,16 @@ void parseUserInput(strparam s)
 
     auto command = scanner.takeToken();
 
-    if (command == "exit"_sv)
+    for (auto&& b: BUILTINS)
     {
-        auto arg = scanner.takeAll().trim();
-        int code = 0;
+        if (command == b.name)
+        {
+            b.fn(b, scanner);
+            return;
+        }
+    }
 
-        if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
-            cout << "warning: invalid exit code '" << arg << "\'\n";
-        exit(code);
-    }
-    else if (command == "echo"_sv)
-    {
-        auto arg = scanner.takeAll();
-        cout << arg << "\n";
-    }
-    else
-    {
-        cout << command << ": command not found\n";
-    }
+    cout << command << ": not found" << endl;
 }
 
 int main()
