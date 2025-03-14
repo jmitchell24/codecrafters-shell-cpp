@@ -101,6 +101,20 @@ void fnTYPE(Builtin const& b, Scanner& s)
     if (arg.empty())
         return;
 
+    //
+    // check for builtin
+    //
+
+    if (Builtin b; Builtin::find(arg, b))
+    {
+        cout << arg << " is a shell builtin\n";
+        return;
+    }
+
+    //
+    // search PATH
+    //
+
     auto path_var = string(getenv("PATH"));
     auto paths = trimsplit::container(path_var, [](auto&& it)
     {
