@@ -1,5 +1,6 @@
 #include "builtins.hpp"
 #include "scanner.hpp"
+#include "user_input.hpp"
 using namespace sh;
 
 
@@ -10,64 +11,92 @@ using namespace sh;
 #include <array>
 #include <cstdio>
 #include <dirent.h>
+#include <print>
+#include <sys/wait.h>
 using namespace std;
 
 #include <ut/string.hpp>
 #include <ut/check.hpp>
 using namespace ut;
 
-
-
-
-
-// void fnExit(Builtin const& b, Scanner& s)
-// {
-//     auto arg = s.takeAll().trim();
-//     int code = 0;
-//
-//     if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
-//         cout << "warning: invalid exit code '" << arg << "\'\n";
-//     exit(code);
-// }
-//
-// void fnEcho(Builtin const& b, Scanner& s)
-// {
-//     auto arg = s.takeAll();
-//     cout << arg << "\n";
-// }
-//
-// void fnType(Builtin const& b, Scanner& s)
-// {
-//     auto arg = s.takeAll().trim();
-//
-//     for (auto&& b: BUILTINS)
-//     {
-//         if (arg == b.name)
-//         {
-//             cout << b.desc << endl;
-//             return;
-//         }
-//     }
-//
-//     cout << arg << ": not found" << endl;
-// }
-
-
-void parseUserInput(strparam s)
+bool exec(UserInput const& u)
 {
-    Scanner scanner{s};
+    static char  ARG_BUFFER_CHARS[1000];
+    static char* ARG_BUFFER[1000];
 
-    auto command = scanner.takeToken();
+    if (u.empty())
+    {
+        return false;
+    }
 
-    if (Builtin b; Builtin::find(command, b))
+    // load argument buffer for 'execvp'
+
     {
-        b.fn(b, scanner);
+        char* dst = ARG_BUFFER_CHARS;
+        char* end = ARG_BUFFER_CHARS + 1000;
+
+        size_t i = 0;
+        for (; i < u.tokens().size(); ++i)
+        {
+            auto&& tok = u.tokens()[i];
+            size_t gap = end - dst;
+
+            tok.strncpy(dst, gap);
+
+            ARG_BUFFER[i] = dst;
+            dst += tok.size() + 1;
+        }
+        ARG_BUFFER[i] = nullptr;
     }
-    else
+
+    auto pid = fork();
+
+    // error
+    if (pid == -1)
     {
-        cout << command << ": not found\n";
+        return false;
     }
+
+    // new proc
+    if (pid == 0)
+    {
+        execvp(ARG_BUFFER[0], ARG_BUFFER);
+        // proc will end inside 'execvp'
+        return false;
+    }
+
+    // old proc
+    if (int status; waitpid(pid, &status, 0) == pid)
+    {
+        return true;
+    }
+
+    return false;
+
 }
+
+/// return false if shell should stop
+bool eval(UserInput const& u)
+{
+    if (u.empty())
+        return false;
+
+    if (Builtin b; Builtin::find(u.nameText(), b))
+    {
+        b.fn(b, u);
+        return true;
+    }
+
+    if (exec(u))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+static char const* const SHELL_PREFIX = "$ ";
 
 
 
@@ -75,42 +104,19 @@ void parseUserInput(strparam s)
 
 int main()
 {
-    array<char, 1000> buffer{};
+    string user_input_text;
 
-    while (true)
+    do
     {
-        printf("$ ");
-
-        if (fgets(buffer.data(), buffer.size(), stdin) == nullptr)
+        if (auto u = UserInput(user_input_text); !u.empty())
         {
-            printf("something went wrong...\n");
-            return EXIT_FAILURE;
+            if (!eval(u))
+                break;
         }
 
-        auto user_input = cstrview(buffer.data());
-
-        parseUserInput(user_input);
-
+        print("{}", SHELL_PREFIX);
     }
+    while (getline(cin, user_input_text));
 
-
-    return EXIT_SUCCESS;
-
-    // while (true)
-    // {
-    //     printf("$ ");
-    //
-    //     if (fgets(buffer, BUFFER_SIZE, stdin) == nullptr)
-    //     {
-    //         printf("something went wrong...\n");
-    //         return EXIT_FAILURE;
-    //     }
-    //
-    //     auto argv = trimsplit::containerWS(cstrview(buffer));
-    //
-    //     parseText(buffer);
-    //
-    // }
-
-
+    return EXIT_FAILURE;
 }

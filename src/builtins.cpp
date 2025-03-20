@@ -26,7 +26,7 @@ using namespace std;
 // Forward Decls
 //
 
-#define BUILTIN(a_, b_, c_) void fn##a_(Builtin const& b, Scanner& s);
+#define BUILTIN(a_, b_, c_) void fn##a_(Builtin const&, UserInput const&);
 SH_ENUM_BUILTINS
 #undef BUILTIN
 
@@ -37,28 +37,32 @@ SH_ENUM_BUILTINS
 #undef BUILTIN
 };
 
-bool Builtin::find(strparam s, Builtin& b)
+//
+// Builtin Implementation
+//
+
+bool Builtin::find(strparam name, Builtin& builtin)
 {
     for (auto&& it: BUILTINS)
     {
-        if (s == it.name)
+        if (name == it.name)
         {
-            b = it;
+            builtin = it;
             return true;
         }
     }
     return false;
 }
 
-void fnECHO(Builtin const& b, Scanner& s)
+void fnECHO(Builtin const& b, UserInput const& u)
 {
-    auto arg = s.takeAll().trim();
+    auto arg = u.argsText();
     cout << arg << "\n";
 }
 
-void fnEXIT(Builtin const& b, Scanner& s)
+void fnEXIT(Builtin const& b, UserInput const& u)
 {
-     auto arg = s.takeAll().trim();
+     auto arg = u.argsText();
      int code = 0;
 
      if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
@@ -94,9 +98,9 @@ bool fileExists(cstrparam dir_path, strparam filename)
     return false;
 }
 
-void fnTYPE(Builtin const& b, Scanner& s)
+void fnTYPE(Builtin const& b, UserInput const& u)
 {
-    auto arg = s.takeAll().trim();
+    auto arg = u.argsText();
 
     if (arg.empty())
         return;
@@ -136,4 +140,105 @@ void fnTYPE(Builtin const& b, Scanner& s)
 
 
 
+
+//
+// Program Implementation
+//
+
+bool Program::exec(Program::args_type const& args)
+{
+    if (file.empty())
+        return false;
+
+    vector<char const*> argbuf;
+    argbuf.push_back(file.c_str());
+    for (auto&& it: args)
+        argbuf.push_back(it.c_str());
+    argbuf.push_back(nullptr);
+
+    return execvp(argbuf[0], const_cast<char *const *>(argbuf.data())) != -1;
+}
+
+
+bool Program::findInDirectory(cstrparam dir_str, strparam prog_str, Program& p)
+{
+#ifndef _DIRENT_HAVE_D_TYPE
+    return false; // don't bother trying if we can't check for regular files.
+#endif
+
+    if (DIR* dir = opendir(dir_str); dir != nullptr)
+    {
+        dirent* ent = nullptr;
+
+        while ((ent = readdir(dir)) != nullptr)
+        {
+            if (ent->d_type == DT_REG)
+            {
+                if (prog_str == cstrparam(ent->d_name))
+                {
+                    p.file.append(dir_str.begin(), dir_str.end());
+                    p.file += filesystem::path::preferred_separator;
+                    p.file.append(prog_str.begin(), prog_str.end());
+                    return true;
+                }
+            }
+        }
+
+        closedir(dir);
+    }
+
+    return false;
+}
+
+bool Program::findInPath(strparam prog_str, Program& p)
+{
+    for (auto&& it: getPathDirs())
+        if (findInDirectory(it.str(), prog_str, p))
+            return true;
+    return false;
+}
+
+bool Program::existsInPath(strparam prog_str)
+{
+    for (auto&& it: getPathDirs())
+        if (existsInDirectory(it.str(), prog_str))
+            return true;
+    return false;
+}
+
+bool Program::existsInDirectory(cstrparam dir_str, strparam prog_str)
+{
+#ifndef _DIRENT_HAVE_D_TYPE
+    return false; // don't bother trying if we can't check for regular files.
+#endif
+
+    if (DIR* dir = opendir(dir_str); dir != nullptr)
+    {
+        dirent* ent = nullptr;
+
+        while ((ent = readdir(dir)) != nullptr)
+        {
+            if (ent->d_type == DT_REG)
+                if (prog_str == cstrparam(ent->d_name))
+                    return true;
+        }
+
+        closedir(dir);
+    }
+
+    return false;
+}
+
+cstrparam Program::getPathVar()
+{
+    static auto path_var = cstrview(getenv("PATH"));
+    return path_var;
+}
+
+
+Program::dirs_type Program::getPathDirs()
+{
+    static dirs_type path_dirs = trimsplit::container(getPathVar(), [](auto&& it){ return it == ':'; });
+    return path_dirs;
+}
 
