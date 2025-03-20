@@ -23,29 +23,35 @@ using namespace ut;
 using namespace std;
 
 //
-// Forward Decls
-//
-
-#define BUILTIN(a_, b_, c_) void fn##a_(Builtin const&, UserInput const&);
-SH_ENUM_BUILTINS
-#undef BUILTIN
-
-static array<Builtin, 3> const BUILTINS =
-{
-#define BUILTIN(a_, b_, c_)  Builtin{ BUILTIN_##a_, &fn##a_, b_, c_##_sv },
-SH_ENUM_BUILTINS
-#undef BUILTIN
-};
-
-//
 // Builtin Implementation
 //
 
+Builtin::Builtin()
+    : m_kind{}, m_name{}, m_exec{nullptr}
+{}
+
+Builtin::Builtin(BuiltinKind kind, cstrparam name, exec_type exec)
+    : m_kind{kind}, m_name{name}, m_exec{exec}
+{}
+
+void Builtin::exec(UserInput const& u) const
+{
+    (this->*m_exec)(u);
+}
+
+
 bool Builtin::find(strparam name, Builtin& builtin)
 {
+    static array const BUILTINS =
+    {
+#define BUILTIN(a_, b_)  Builtin{ BUILTIN_##a_, b_, &Builtin::exec##a_ },
+SH_ENUM_BUILTINS
+#undef BUILTIN
+    };
+
     for (auto&& it: BUILTINS)
     {
-        if (name == it.name)
+        if (name == it.m_name)
         {
             builtin = it;
             return true;
@@ -54,13 +60,13 @@ bool Builtin::find(strparam name, Builtin& builtin)
     return false;
 }
 
-void fnECHO(Builtin const& b, UserInput const& u)
+void Builtin::execECHO(UserInput const& u) const
 {
     auto arg = u.argsText();
-    cout << arg << "\n";
+    printf(".*s\n", arg.size(), arg.data());
 }
 
-void fnEXIT(Builtin const& b, UserInput const& u)
+void Builtin::execEXIT(UserInput const& u) const
 {
      auto arg = u.argsText();
      int code = 0;
@@ -68,6 +74,15 @@ void fnEXIT(Builtin const& b, UserInput const& u)
      if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
          cout << "warning: invalid exit code '" << arg << "\'\n";
      exit(code);
+}
+
+void Builtin::execPWD(UserInput const& u) const
+{
+    static array<char, 1000> BUFFER;
+
+    if (getcwd(BUFFER.data(), BUFFER.size()) == nullptr)
+        BUFFER[0] = '\0';
+    printf("%s\n", BUFFER.data());
 }
 
 
@@ -98,7 +113,7 @@ bool fileExists(cstrparam dir_path, strparam filename)
     return false;
 }
 
-void fnTYPE(Builtin const& b, UserInput const& u)
+void Builtin::execTYPE(UserInput const& u) const
 {
     auto arg = u.argsText();
 
@@ -145,6 +160,7 @@ void fnTYPE(Builtin const& b, UserInput const& u)
 // Program Implementation
 //
 
+#if 0
 bool Program::exec(Program::args_type const& args)
 {
     if (file.empty())
@@ -242,3 +258,4 @@ Program::dirs_type Program::getPathDirs()
     return path_dirs;
 }
 
+#endif

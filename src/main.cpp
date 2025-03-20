@@ -20,8 +20,8 @@ using namespace ut;
 
 bool exec(UserInput const& u)
 {
-    static char  ARG_BUFFER_CHARS[1000];
-    static char* ARG_BUFFER[1000];
+    static array<char, 1000>  ARG_BUFFER_CHARS;
+    static array<char*, 1000> ARG_BUFFER;
 
     if (u.empty())
     {
@@ -31,8 +31,8 @@ bool exec(UserInput const& u)
     // load argument buffer for 'execvp'
 
     {
-        char* dst = ARG_BUFFER_CHARS;
-        char* end = ARG_BUFFER_CHARS + 1000;
+        char* dst = ARG_BUFFER_CHARS.data();
+        char* end = ARG_BUFFER_CHARS.data() + ARG_BUFFER_CHARS.size();
 
         size_t i = 0;
         for (; i < u.tokens().size(); ++i)
@@ -61,10 +61,10 @@ bool exec(UserInput const& u)
     // new proc
     if (pid == 0)
     {
-        execvp(*ARG_BUFFER, ARG_BUFFER);
+        execvp(*ARG_BUFFER.data(), ARG_BUFFER.data());
         // if there is no error, proc will end inside 'execvp'
 
-        printf("%s: command not found\n", *ARG_BUFFER);
+        printf("%s: command not found\n", *ARG_BUFFER.data());
         return false;
     }
 
@@ -86,7 +86,7 @@ bool eval(UserInput const& u)
 
     if (Builtin b; Builtin::find(u.nameText(), b))
     {
-        b.fn(b, u);
+        b.exec(u);
         return true;
     }
 

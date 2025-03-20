@@ -22,10 +22,11 @@
 #include <vector>
 #include <filesystem>
 
-#define SH_ENUM_BUILTINS \
-    BUILTIN(EXIT, "exit", "exit is a shell builtin") \
-    BUILTIN(ECHO, "echo", "echo is a shell builtin") \
-    BUILTIN(TYPE, "type", "type is a shell builtin")
+#define SH_ENUM_BUILTINS  \
+    BUILTIN(EXIT, "exit") \
+    BUILTIN(ECHO, "echo") \
+    BUILTIN(TYPE, "type") \
+    BUILTIN(PWD , "pwd" )
 
 namespace sh
 {
@@ -35,7 +36,7 @@ namespace sh
 
     enum BuiltinKind
     {
-#define BUILTIN(a_, b_, c_) BUILTIN_##a_,
+#define BUILTIN(a_, b_) BUILTIN_##a_,
 SH_ENUM_BUILTINS
 #undef BUILTIN
     };
@@ -44,19 +45,35 @@ SH_ENUM_BUILTINS
     // Builtin Structure
     //
 
-    struct Builtin
+    class Builtin
     {
-        using fn_type = void(*)(Builtin const&, UserInput const&);
+    public:
+        using exec_type = void(Builtin::*)(UserInput const&) const;
 
-        BuiltinKind kind;
-        fn_type     fn;
+        Builtin();
+        Builtin(BuiltinKind kind, ut::cstrparam name, exec_type exec);
 
-        ut::cstrview    name;
-        ut::cstrview    desc;
+        inline bool valid() const { return m_exec != nullptr; }
+        void exec(UserInput const& u) const;
 
         static bool find(ut::strparam name, Builtin& builtin);
+
+    private:
+        BuiltinKind     m_kind;
+        ut::cstrview    m_name;
+        exec_type       m_exec;
+
+        //
+        // Forward Decls
+        //
+
+#define BUILTIN(a_, b_) void exec##a_(UserInput const&) const;
+        SH_ENUM_BUILTINS
+#undef BUILTIN
     };
 
+
+#if 0
     struct Program
     {
         using dirs_type = std::vector<ut::strview>;
@@ -75,4 +92,5 @@ SH_ENUM_BUILTINS
         static ut::cstrparam getPathVar();
         static dirs_type getPathDirs();
     };
+#endif
 }
