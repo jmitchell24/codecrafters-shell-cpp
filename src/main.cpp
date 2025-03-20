@@ -41,9 +41,11 @@ bool exec(UserInput const& u)
             size_t gap = end - dst;
 
             tok.strncpy(dst, gap);
-
             ARG_BUFFER[i] = dst;
-            dst += tok.size() + 1;
+
+            dst += tok.size();
+            *dst = '\0';
+            dst += 1;
         }
         ARG_BUFFER[i] = nullptr;
     }
@@ -59,8 +61,10 @@ bool exec(UserInput const& u)
     // new proc
     if (pid == 0)
     {
-        execvp(ARG_BUFFER[0], ARG_BUFFER);
-        // proc will end inside 'execvp'
+        execvp(*ARG_BUFFER, ARG_BUFFER);
+        // if there is no error, proc will end inside 'execvp'
+
+        printf("%s: command not found\n", *ARG_BUFFER);
         return false;
     }
 
