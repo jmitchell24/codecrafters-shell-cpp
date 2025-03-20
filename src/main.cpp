@@ -11,7 +11,6 @@ using namespace sh;
 #include <array>
 #include <cstdio>
 #include <dirent.h>
-#include <print>
 #include <sys/wait.h>
 using namespace std;
 
@@ -96,7 +95,7 @@ bool eval(UserInput const& u)
 }
 
 
-static char const* const SHELL_PREFIX = "$ ";
+static const auto SHELL_PREFIX = "$ "_sv;
 
 
 
@@ -114,7 +113,7 @@ int main()
                 break;
         }
 
-        print("{}", SHELL_PREFIX);
+        printf("%.*s", SHELL_PREFIX.size(), SHELL_PREFIX.data());
     }
     while (getline(cin, user_input_text));
 
