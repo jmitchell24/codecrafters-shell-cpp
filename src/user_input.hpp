@@ -36,10 +36,18 @@ namespace sh
         inline bool hasArgs() const { return m_tokens.size() > 1; }
 
         /// the first token of user input (builtin name, program name, etc...)
-        inline ut::strview nameText() const { check(!empty(), "must not be empty"); return m_tokens[0]; }
+        inline ut::strview nameText() const
+        {
+            return empty() ? ut::strview{} : m_tokens[0];
+        }
 
         /// the text containing the beginning and end of all arguments (everything after the first token)
-        inline ut::strview argsText() const { check(!empty(), "must not be empty"); return ut::strview(m_tokens[1].begin(), m_tokens.back().end()); }
+        inline ut::strview argsText() const
+        {
+            if (m_tokens.size() < 2)
+                return ut::strview{};
+            return ut::strview{m_tokens[1].begin(), m_tokens.back().end()};
+        }
 
         /// the entire text of user input
         inline ut::strview text() const { return m_line; }

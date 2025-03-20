@@ -63,7 +63,7 @@ SH_ENUM_BUILTINS
 void Builtin::execECHO(UserInput const& u) const
 {
     auto arg = u.argsText();
-    printf(".*s\n", arg.size(), arg.data());
+    printf("%.*s\n", arg.size(), arg.data());
 }
 
 void Builtin::execEXIT(UserInput const& u) const
@@ -72,7 +72,7 @@ void Builtin::execEXIT(UserInput const& u) const
      int code = 0;
 
      if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
-         cout << "warning: invalid exit code '" << arg << "\'\n";
+         exit(EXIT_SUCCESS);
      exit(code);
 }
 
