@@ -21,10 +21,11 @@ namespace sh
     class UserInput
     {
     public:
-        using tokens_type = std::vector<ut::strview>;
+        using token_type = std::string;
+        using tokens_type = std::vector<token_type>;
 
         UserInput(ut::strparam line)
-            : m_line{line}, m_tokens{ut::trimsplit::containerWS(line)}
+            : m_line{line}, m_tokens{tokenizeLine(line)}
         {}
 
         inline UserInput(UserInput const&)=default;
@@ -32,22 +33,29 @@ namespace sh
 
         /// is there any usable data in user input (non-whitespace chars)?
         inline bool empty() const { return m_tokens.empty(); }
-
-        inline bool hasArgs() const { return m_tokens.size() > 1; }
+        inline bool count() const { return m_tokens.size(); }
+        inline size_t arity() const { return empty() ? 0 : m_tokens.size()-1; }
+        inline bool isUnary() const { return arity() == 1; }
+        inline bool isBinary() const { return arity() == 2; }
 
         /// the first token of user input (builtin name, program name, etc...)
-        inline ut::strview nameText() const
+        inline ut::cstrview name() const
         {
-            return empty() ? ut::strview{} : m_tokens[0];
+            return empty() ? ut::cstrview{} : m_tokens[0];
+        }
+
+        inline ut::cstrview arg1() const
+        {
+            return arity() == 1 ? m_tokens[1] : ut::cstrview{};
         }
 
         /// the text containing the beginning and end of all arguments (everything after the first token)
-        inline ut::strview argsText() const
-        {
-            if (m_tokens.size() < 2)
-                return ut::strview{};
-            return ut::strview{m_tokens[1].begin(), m_tokens.back().end()};
-        }
+        // inline ut::strview argsText() const
+        // {
+        //     if (m_tokens.size() < 2)
+        //         return ut::strview{};
+        //     return ut::strview{m_tokens[1].begin(), m_tokens.back().end()};
+        // }
 
         /// the entire text of user input
         inline ut::strview text() const { return m_line; }
@@ -55,8 +63,17 @@ namespace sh
         /// the entire list of tokens, including the name
         inline tokens_type const& tokens() const { return m_tokens; }
 
+        inline token_type const& tokenAt(size_t i) const
+        {
+            check(i < m_tokens.size(), "out of range");
+            return m_tokens[i];
+        }
+
     private:
         ut::strview m_line;
         tokens_type m_tokens;
+
+        static tokens_type tokenizeLine(ut::strparam line);
+
     };
 }

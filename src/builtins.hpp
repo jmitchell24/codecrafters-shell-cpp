@@ -19,7 +19,8 @@
     BUILTIN(ECHO, "echo") \
     BUILTIN(TYPE, "type") \
     BUILTIN(PWD , "pwd" ) \
-    BUILTIN(CD  , "cd"  )
+    BUILTIN(CD  , "cd"  ) \
+    BUILTIN(TEST, "test")
 
 namespace sh
 {

@@ -62,18 +62,26 @@ SH_ENUM_BUILTINS
 
 void Builtin::execECHO(UserInput const& u) const
 {
-    auto arg = u.argsText();
-    printf("%.*s\n", arg.size(), arg.data());
+    auto&& tokens = u.tokens();
+    for (size_t i = 1; i < tokens.size(); ++i)
+    {
+        auto&& it = tokens[i];
+        printf("%.*s ", it.size(), it.data());
+    }
+    printf("\n");
 }
 
 void Builtin::execEXIT(UserInput const& u) const
 {
-     auto arg = u.argsText();
-     int code = 0;
+     if (u.isUnary())
+     {
+         auto arg_text = u.arg1();
+         int code = 0;
+         if (from_chars(arg_text.begin(), arg_text.end(), code).ec == errc{})
+             exit(code);
+     }
 
-     if (from_chars(arg.begin(), arg.end(), code).ec != errc{})
-         exit(EXIT_SUCCESS);
-     exit(code);
+     exit(EXIT_SUCCESS);
 }
 
 void Builtin::execPWD(UserInput const& u) const
@@ -85,32 +93,45 @@ void Builtin::execPWD(UserInput const& u) const
     printf("%s\n", BUFFER.data());
 }
 
-char const* getenv_s(char const* name)
-{
-    if (char const* value = getenv(name))
-        return value;
-    return "";
-}
-
 void Builtin::execCD(UserInput const& u) const
 {
-    string arg;
-
-    static char const* home_path = getenv_s("HOME");
-
-    for (auto&& it: u.argsText())
+    static char const* ENV_HOME = []
     {
-        if (it == '~')
-            arg += home_path;
-        else
-            arg += it;
+        if (char const* value = getenv("HOME"))
+            return value;
+        return "";
+    }();
+
+    if (u.isUnary())
+    {
+        string arg;
+
+        for (auto&& it: u.arg1())
+        {
+            if (it == '~')
+                arg += ENV_HOME;
+            else
+                arg += it;
+        }
+
+        if (chdir(arg.c_str()) == -1)
+        {
+            printf("%s: No such file or directory\n", arg.c_str());
+        }
     }
 
-    if (chdir(arg.c_str()) == -1)
-    {
-        printf("%s: No such file or directory\n", arg.c_str());
-    }
+
 }
+
+void Builtin::execTEST(UserInput const& u) const
+{
+    for (auto&& it: u.tokens())
+    {
+        cout << "tok: '" << it << "'\n";
+    }
+
+}
+
 
 
 
@@ -143,40 +164,42 @@ bool fileExists(cstrparam dir_path, strparam filename)
 
 void Builtin::execTYPE(UserInput const& u) const
 {
-    auto arg = u.argsText();
-
-    if (arg.empty())
-        return;
-
-    //
-    // check for builtin
-    //
-
-    if (Builtin b; Builtin::find(arg, b))
+    if (u.arity() > 0)
     {
-        cout << arg << " is a shell builtin\n";
-        return;
-    }
+        auto&& arg = u.arg1();
 
-    //
-    // search PATH
-    //
+        //
+        // check for builtin
+        //
 
-    auto path_var = string(getenv("PATH"));
-    auto paths = trimsplit::container(path_var, [](auto&& it)
-    {
-       return it == ':';
-    });
-
-    for (auto&& it : paths)
-    {
-        auto s_dir = it.str();
-        if (fileExists(s_dir, arg))
+        if (Builtin b; find(arg, b))
         {
-            cout << arg << " is " << s_dir << "/" << arg << "\n";
+            cout << arg << " is a shell builtin\n";
             return;
         }
+
+        //
+        // search PATH
+        //
+
+        auto path_var = string(getenv("PATH"));
+        auto paths = trimsplit::container(path_var, [](auto&& it)
+        {
+           return it == ':';
+        });
+
+        for (auto&& it : paths)
+        {
+            auto s_dir = it.str();
+            if (fileExists(s_dir, arg))
+            {
+                cout << arg << " is " << s_dir << "/" << arg << "\n";
+                return;
+            }
+        }
+
+        cout << arg << ": not found\n";
     }
 
-    cout << arg << ": not found\n";
+
 }

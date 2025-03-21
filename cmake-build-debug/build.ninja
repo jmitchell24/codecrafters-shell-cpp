@@ -67,6 +67,15 @@ build CMakeFiles/shell.dir/src/main.cpp.o: CXX_COMPILER__shell_unscanned_Debug /
   TARGET_COMPILE_PDB = CMakeFiles/shell.dir/
   TARGET_PDB = shell.pdb
 
+build CMakeFiles/shell.dir/src/user_input.cpp.o: CXX_COMPILER__shell_unscanned_Debug /home/james/sync/Projects/cpp/codecrafters-shell-cpp/src/user_input.cpp || cmake_object_order_depends_target_shell
+  DEP_FILE = CMakeFiles/shell.dir/src/user_input.cpp.o.d
+  FLAGS = -g -std=gnu++23 -fdiagnostics-color=always
+  INCLUDES = -I/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/_deps/ut-src/src/../include
+  OBJECT_DIR = CMakeFiles/shell.dir
+  OBJECT_FILE_DIR = CMakeFiles/shell.dir/src
+  TARGET_COMPILE_PDB = CMakeFiles/shell.dir/
+  TARGET_PDB = shell.pdb
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target shell
@@ -75,7 +84,7 @@ build CMakeFiles/shell.dir/src/main.cpp.o: CXX_COMPILER__shell_unscanned_Debug /
 #############################################
 # Link the executable shell
 
-build shell: CXX_EXECUTABLE_LINKER__shell_Debug CMakeFiles/shell.dir/src/builtins.cpp.o CMakeFiles/shell.dir/src/main.cpp.o | _deps/ut-build/src/libut.a || _deps/ut-build/src/libut.a
+build shell: CXX_EXECUTABLE_LINKER__shell_Debug CMakeFiles/shell.dir/src/builtins.cpp.o CMakeFiles/shell.dir/src/main.cpp.o CMakeFiles/shell.dir/src/user_input.cpp.o | _deps/ut-build/src/libut.a || _deps/ut-build/src/libut.a
   FLAGS = -g
   LINK_LIBRARIES = _deps/ut-build/src/libut.a
   OBJECT_DIR = CMakeFiles/shell.dir

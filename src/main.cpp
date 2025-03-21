@@ -19,6 +19,7 @@ using namespace ut;
 
 bool execSystem(UserInput const& u)
 {
+#if 0
     static array<char, 1000>  ARG_BUFFER_CHARS;
     static array<char*, 1000> ARG_BUFFER;
 
@@ -48,6 +49,14 @@ bool execSystem(UserInput const& u)
         }
         ARG_BUFFER[i] = nullptr;
     }
+#endif
+
+    static array<char*, 128> ARG_BUFFER;
+
+    size_t i = 0;
+    for (; i < u.count(); ++i)
+        ARG_BUFFER[i] = const_cast<char*>(u.tokenAt(i).data());
+    ARG_BUFFER[i] = nullptr;
 
     auto pid = fork();
 
@@ -83,7 +92,7 @@ bool eval(UserInput const& u)
     if (u.empty())
         return false;
 
-    if (Builtin b; Builtin::find(u.nameText(), b))
+    if (Builtin b; Builtin::find(u.name(), b))
     {
         b.exec(u);
         return true;
