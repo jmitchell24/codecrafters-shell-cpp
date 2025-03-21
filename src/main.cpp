@@ -1,5 +1,4 @@
 #include "builtins.hpp"
-#include "scanner.hpp"
 #include "user_input.hpp"
 using namespace sh;
 
