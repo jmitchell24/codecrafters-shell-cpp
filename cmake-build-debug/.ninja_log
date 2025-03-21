@@ -11,3 +11,10 @@
 5	718	1742561972334677137	CMakeFiles/shell.dir/src/main.cpp.o	f7a28a5493438004
 5	761	1742561972334677137	CMakeFiles/shell.dir/src/builtins.cpp.o	277e373d68396bd7
 761	798	1742561973090671914	shell	94d8b411dd446b8
+1	4	1742562104789816499	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
+1	4	1742562533609187282	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
+5	780	1742562533613187258	CMakeFiles/shell.dir/src/builtins.cpp.o	277e373d68396bd7
+780	817	1742562534388182581	shell	94d8b411dd446b8
+1	4	1742562710280112829	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
+4	740	1742562710284112803	CMakeFiles/shell.dir/src/builtins.cpp.o	277e373d68396bd7
+740	777	1742562711019108075	shell	94d8b411dd446b8

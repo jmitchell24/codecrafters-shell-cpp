@@ -85,9 +85,27 @@ void Builtin::execPWD(UserInput const& u) const
     printf("%s\n", BUFFER.data());
 }
 
+char const* getenv_s(char const* name)
+{
+    if (char const* value = getenv(name))
+        return value;
+    return "";
+}
+
 void Builtin::execCD(UserInput const& u) const
 {
-    auto arg = u.argsText().str();
+    string arg;
+
+    static char const* home_path = getenv_s("HOME");
+
+    for (auto&& it: u.argsText())
+    {
+        if (it == '~')
+            arg += home_path;
+        else
+            arg += it;
+    }
+
     if (chdir(arg.c_str()) == -1)
     {
         printf("%s: No such file or directory\n", arg.c_str());
