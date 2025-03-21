@@ -1,0 +1,13 @@
+# ninja log v6
+2435	2484	1742561515312094971	_deps/ut-build/src/libut.a	aad1e035d8761e3
+5	2434	1742561512882113201	_deps/ut-build/src/CMakeFiles/ut.dir/math.cpp.o	24d03c91242ed41b
+5	1034	1742561512882113201	_deps/ut-build/src/CMakeFiles/ut.dir/color.cpp.o	bec42f166400f2b0
+1	4	1742561577742656141	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
+808	847	1742561559063785522	shell	97f554c3ec35c2e9
+7	1743	1742561705241788887	build.ninja	a6dfb88f1aaa80a7
+5	757	1742561512882113201	CMakeFiles/shell.dir/src/main.cpp.o	f7a28a5493438004
+5	808	1742561558260791084	CMakeFiles/shell.dir/src/builtins.cpp.o	277e373d68396bd7
+1	4	1742561972330677164	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
+5	718	1742561972334677137	CMakeFiles/shell.dir/src/main.cpp.o	f7a28a5493438004
+5	761	1742561972334677137	CMakeFiles/shell.dir/src/builtins.cpp.o	277e373d68396bd7
+761	798	1742561973090671914	shell	94d8b411dd446b8
