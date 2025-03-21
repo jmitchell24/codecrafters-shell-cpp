@@ -14,19 +14,12 @@
 //
 #include <ut/string/view.hpp>
 
-//
-// std
-//
-#include <array>
-#include <string>
-#include <vector>
-#include <filesystem>
-
 #define SH_ENUM_BUILTINS  \
     BUILTIN(EXIT, "exit") \
     BUILTIN(ECHO, "echo") \
     BUILTIN(TYPE, "type") \
-    BUILTIN(PWD , "pwd" )
+    BUILTIN(PWD , "pwd" ) \
+    BUILTIN(CD  , "cd"  )
 
 namespace sh
 {
@@ -71,26 +64,4 @@ SH_ENUM_BUILTINS
         SH_ENUM_BUILTINS
 #undef BUILTIN
     };
-
-
-#if 0
-    struct Program
-    {
-        using dirs_type = std::vector<ut::strview>;
-        using args_type = std::vector<std::string>;
-
-        std::string file;
-
-        bool exec(args_type const& args);
-
-        static bool findInDirectory(ut::cstrparam dir_str, ut::strparam prog_str, Program& p);
-        static bool findInPath(ut::strparam prog_str, Program& p);
-
-        static bool existsInPath(ut::strparam prog_str);
-        static bool existsInDirectory(ut::cstrparam dir_str, ut::strparam prog_str);
-
-        static ut::cstrparam getPathVar();
-        static dirs_type getPathDirs();
-    };
-#endif
 }

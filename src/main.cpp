@@ -18,7 +18,7 @@ using namespace std;
 #include <ut/check.hpp>
 using namespace ut;
 
-bool exec(UserInput const& u)
+bool execSystem(UserInput const& u)
 {
     static array<char, 1000>  ARG_BUFFER_CHARS;
     static array<char*, 1000> ARG_BUFFER;
@@ -90,7 +90,7 @@ bool eval(UserInput const& u)
         return true;
     }
 
-    if (exec(u))
+    if (execSystem(u))
     {
         return true;
     }
@@ -100,10 +100,6 @@ bool eval(UserInput const& u)
 
 
 static const auto SHELL_PREFIX = "$ "_sv;
-
-
-
-
 
 int main()
 {

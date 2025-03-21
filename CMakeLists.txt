@@ -9,10 +9,8 @@ file (
 
 set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 add_executable(shell ${SOURCE_FILES}
-        src/scanner.hpp
         src/builtins.hpp
         src/builtins.cpp
-        src/scanner.cpp
         src/user_input.hpp)
 
 include(FetchContent)

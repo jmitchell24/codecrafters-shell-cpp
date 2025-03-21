@@ -85,6 +85,16 @@ void Builtin::execPWD(UserInput const& u) const
     printf("%s\n", BUFFER.data());
 }
 
+void Builtin::execCD(UserInput const& u) const
+{
+    auto arg = u.argsText().str();
+    if (chdir(arg.c_str()) == -1)
+    {
+        printf("%s: No such file or directory\n", arg.c_str());
+    }
+}
+
+
 
 //
 // 'type' builtin implementation
@@ -152,110 +162,3 @@ void Builtin::execTYPE(UserInput const& u) const
 
     cout << arg << ": not found\n";
 }
-
-
-
-
-//
-// Program Implementation
-//
-
-#if 0
-bool Program::exec(Program::args_type const& args)
-{
-    if (file.empty())
-        return false;
-
-    vector<char const*> argbuf;
-    argbuf.push_back(file.c_str());
-    for (auto&& it: args)
-        argbuf.push_back(it.c_str());
-    argbuf.push_back(nullptr);
-
-    return execvp(argbuf[0], const_cast<char *const *>(argbuf.data())) != -1;
-}
-
-
-bool Program::findInDirectory(cstrparam dir_str, strparam prog_str, Program& p)
-{
-#ifndef _DIRENT_HAVE_D_TYPE
-    return false; // don't bother trying if we can't check for regular files.
-#endif
-
-    if (DIR* dir = opendir(dir_str); dir != nullptr)
-    {
-        dirent* ent = nullptr;
-
-        while ((ent = readdir(dir)) != nullptr)
-        {
-            if (ent->d_type == DT_REG)
-            {
-                if (prog_str == cstrparam(ent->d_name))
-                {
-                    p.file.append(dir_str.begin(), dir_str.end());
-                    p.file += filesystem::path::preferred_separator;
-                    p.file.append(prog_str.begin(), prog_str.end());
-                    return true;
-                }
-            }
-        }
-
-        closedir(dir);
-    }
-
-    return false;
-}
-
-bool Program::findInPath(strparam prog_str, Program& p)
-{
-    for (auto&& it: getPathDirs())
-        if (findInDirectory(it.str(), prog_str, p))
-            return true;
-    return false;
-}
-
-bool Program::existsInPath(strparam prog_str)
-{
-    for (auto&& it: getPathDirs())
-        if (existsInDirectory(it.str(), prog_str))
-            return true;
-    return false;
-}
-
-bool Program::existsInDirectory(cstrparam dir_str, strparam prog_str)
-{
-#ifndef _DIRENT_HAVE_D_TYPE
-    return false; // don't bother trying if we can't check for regular files.
-#endif
-
-    if (DIR* dir = opendir(dir_str); dir != nullptr)
-    {
-        dirent* ent = nullptr;
-
-        while ((ent = readdir(dir)) != nullptr)
-        {
-            if (ent->d_type == DT_REG)
-                if (prog_str == cstrparam(ent->d_name))
-                    return true;
-        }
-
-        closedir(dir);
-    }
-
-    return false;
-}
-
-cstrparam Program::getPathVar()
-{
-    static auto path_var = cstrview(getenv("PATH"));
-    return path_var;
-}
-
-
-Program::dirs_type Program::getPathDirs()
-{
-    static dirs_type path_dirs = trimsplit::container(getPathVar(), [](auto&& it){ return it == ':'; });
-    return path_dirs;
-}
-
-#endif
