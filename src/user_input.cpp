@@ -37,7 +37,7 @@ struct Scanner
     }
 
     /// returns true if token was found. false means scanner has reached end of line
-    bool nextToken(strview& token)
+    bool nextToken(string& token)
     {
         // advance through whitespace
 
@@ -47,7 +47,10 @@ struct Scanner
         // quote handling
 
         if (peek() == '\'')
+        {
+            token = "";
             return takeQuotes(token);
+        }
 
         // advance and take token
 
@@ -59,7 +62,7 @@ struct Scanner
             advance();
         }
 
-        token = strview{token_begin, cursor};
+        token = strview{token_begin, cursor}.str();
         return true;
     }
 
@@ -83,7 +86,7 @@ struct Scanner
     }
 
     /// returns false if at end of line
-    bool takeQuotes(strview& token)
+    bool takeQuotes(string& token)
     {
         check(peek() == '\'', "not quoted");
         advance();
@@ -93,11 +96,16 @@ struct Scanner
         while (!isAtEnd())
         {
             if (peek() != '\'')
+            {
                 advance();
+            }
             else
             {
-                token = strview{token_begin, cursor};
+                token += strview{token_begin, cursor}.str();
                 advance();
+
+                if (!isAtEnd() && peek() == '\'')
+                    return takeQuotes(token);
                 return true;
             }
         }
@@ -105,6 +113,21 @@ struct Scanner
         return false;
     }
 };
+
+// string sanitize(strparam line)
+// {
+//     string s;
+//
+//     for (size_t i = 1; i < line.size(); ++i)
+//     {
+//         char x = line[i-1];
+//         char y = line[i];
+//
+//         if (x == '\'' && y == '\'')
+//     }
+//
+//     return s;
+// }
 
 
 UserInput::tokens_type UserInput::tokenizeLine(strparam line)
@@ -114,9 +137,9 @@ UserInput::tokens_type UserInput::tokenizeLine(strparam line)
 
     tokens_type tokens;
 
-    strview token;
+    string token;
     while (scanner.nextToken(token))
-        tokens.push_back(token.str());
+        tokens.push_back(token);
     return tokens;
 
 

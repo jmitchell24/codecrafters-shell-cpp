@@ -85,6 +85,33 @@ bool execSystem(UserInput const& u)
     return false;
 
 }
+#if 0 // https://brennan.io/2015/01/16/write-a-shell-in-c/
+int lsh_launch(char **args)
+{
+    pid_t pid, wpid;
+    int status;
+
+    pid = fork();
+    if (pid == 0) {
+        // Child process
+        if (execvp(args[0], args) == -1) {
+            perror("lsh");
+        }
+        exit(EXIT_FAILURE);
+    } else if (pid < 0) {
+        // Error forking
+        perror("lsh");
+    } else {
+        // Parent process
+        do {
+            wpid = waitpid(pid, &status, WUNTRACED);
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    }
+
+    return 1;
+}
+
+#endif
 
 /// return false if shell should stop
 bool eval(UserInput const& u)
@@ -108,6 +135,43 @@ bool eval(UserInput const& u)
 
 
 static const auto SHELL_PREFIX = "$ "_sv;
+
+string sanitize(strparam line)
+{
+
+
+    if (line.size() < 2)
+        return line.str();
+
+    string s;
+
+    size_t sz = line.size();
+    for (size_t i = 0; i < sz; ++i)
+    {
+        char x = line[i];
+
+        if (i < sz-1)
+        {
+            char y = line[i+1];
+
+            if (x == '\'' && y == '\'')
+            {
+                ++i; continue;
+            }
+
+
+            if (x == '\"' && y == '\"')
+            {
+                ++i; continue;
+            }
+        }
+
+        s += x;
+    }
+    s += line[sz];
+
+    return s;
+}
 
 int main()
 {

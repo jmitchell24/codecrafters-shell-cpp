@@ -12,7 +12,9 @@ add_executable(shell ${SOURCE_FILES}
         src/builtins.hpp
         src/builtins.cpp
         src/user_input.hpp
-        src/user_input.cpp)
+        src/user_input.cpp
+        src/scanner.hpp
+        src/scanner.cpp)
 
 include(FetchContent)
 

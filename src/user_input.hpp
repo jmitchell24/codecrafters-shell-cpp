@@ -25,7 +25,7 @@ namespace sh
         using tokens_type = std::vector<token_type>;
 
         UserInput(ut::strparam line)
-            : m_line{line}, m_tokens{tokenizeLine(line)}
+            : m_tokens{tokenizeLine(line)}
         {}
 
         inline UserInput(UserInput const&)=default;
@@ -49,17 +49,6 @@ namespace sh
             return arity() == 1 ? m_tokens[1] : ut::cstrview{};
         }
 
-        /// the text containing the beginning and end of all arguments (everything after the first token)
-        // inline ut::strview argsText() const
-        // {
-        //     if (m_tokens.size() < 2)
-        //         return ut::strview{};
-        //     return ut::strview{m_tokens[1].begin(), m_tokens.back().end()};
-        // }
-
-        /// the entire text of user input
-        inline ut::strview text() const { return m_line; }
-
         /// the entire list of tokens, including the name
         inline tokens_type const& tokens() const { return m_tokens; }
 
@@ -70,7 +59,6 @@ namespace sh
         }
 
     private:
-        ut::strview m_line;
         tokens_type m_tokens;
 
         static tokens_type tokenizeLine(ut::strparam line);
