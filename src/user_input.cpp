@@ -148,3 +148,92 @@ UserInput::tokens_type UserInput::tokenizeLine(strparam line)
 #endif
 }
 
+UserInput::tokens_type UserInput::tokenizeLine2(strparam line)
+{
+    tokens_type tokens;
+    string currentToken;
+
+    enum QuoteState { QS_NONE, QS_SINGLE, QS_DOUBLE };
+
+    QuoteState quote_state = QS_NONE;
+    bool escaped = false;
+
+    for (size_t i = 0; i < line.size(); ++i)
+    {
+        char c = line[i];
+
+        // Handle escape character
+        if (escaped)
+        {
+            // In double quotes, only certain characters are treated specially when escaped
+            if (quote_state == QS_DOUBLE)
+            {
+                // In double quotes, \ only escapes $, `, ", \, and newline
+                if (c == '$' || c == '`' || c == '"' || c == '\\' || c == '\n')
+                {
+                    currentToken += c;
+                }
+                else
+                {
+                    // Otherwise, both the backslash and the character are preserved
+                    currentToken += '\\';
+                    currentToken += c;
+                }
+            }
+            else
+            {
+                // Outside quotes or in single quotes, \ escapes any character
+                currentToken += c;
+            }
+            escaped = false;
+            continue;
+        }
+
+        // Check for escape character
+        if (c == '\\' && quote_state != QS_SINGLE)
+        {
+            escaped = true;
+            continue;
+        }
+
+        // Handle quotes
+             if (c == '\'' && quote_state == QS_NONE)   { quote_state = QS_SINGLE; continue; }
+        else if (c == '\'' && quote_state == QS_SINGLE) { quote_state = QS_NONE;   continue; }
+        else if (c == '"'  && quote_state == QS_NONE)   { quote_state = QS_DOUBLE; continue; }
+        else if (c == '"'  && quote_state == QS_DOUBLE) { quote_state = QS_NONE;   continue; }
+
+        // Handle whitespace outside of quotes
+        if (std::isspace(c) && quote_state == QS_NONE)
+        {
+            if (!currentToken.empty())
+            {
+                tokens.push_back(currentToken);
+                currentToken.clear();
+            }
+            continue;
+        }
+
+        // Add character to current token
+        currentToken += c;
+    }
+
+    // Handle any remaining escaped character at the end
+    if (escaped) {
+        currentToken += '\\';
+    }
+
+    // Add the last token if not empty
+    if (!currentToken.empty()) {
+        tokens.push_back(currentToken);
+    }
+
+    // Error state: unclosed quotes (bash would prompt for more input)
+    if (quote_state != QS_NONE)
+    {
+        fprintf(stderr, "Warning: Unclosed quotes in input\n");
+        // In a real shell, you might return a special code to prompt for more input
+    }
+
+    return tokens;
+}
+

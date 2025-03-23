@@ -25,7 +25,7 @@ namespace sh
         using tokens_type = std::vector<token_type>;
 
         UserInput(ut::strparam line)
-            : m_tokens{tokenizeLine(line)}
+            : m_tokens{tokenizeLine2(line)}
         {}
 
         inline UserInput(UserInput const&)=default;
@@ -33,7 +33,7 @@ namespace sh
 
         /// is there any usable data in user input (non-whitespace chars)?
         inline bool empty() const { return m_tokens.empty(); }
-        inline bool count() const { return m_tokens.size(); }
+        inline size_t count() const { return m_tokens.size(); }
         inline size_t arity() const { return empty() ? 0 : m_tokens.size()-1; }
         inline bool isUnary() const { return arity() == 1; }
         inline bool isBinary() const { return arity() == 2; }
@@ -62,6 +62,7 @@ namespace sh
         tokens_type m_tokens;
 
         static tokens_type tokenizeLine(ut::strparam line);
+        static tokens_type tokenizeLine2(ut::strparam line);
 
     };
 }

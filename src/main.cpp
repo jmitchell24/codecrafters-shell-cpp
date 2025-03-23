@@ -60,30 +60,29 @@ bool execSystem(UserInput const& u)
 
     auto pid = fork();
 
-    // error
-    if (pid == -1)
+    if (pid < 0) // fork error
     {
-        return false;
+        perror("shell");
+    }
+    else if (pid == 0) // child process
+    {
+        if (execvp(*ARG_BUFFER.data(), ARG_BUFFER.data()) == -1)
+        {
+            printf("%s: command not found\n", ARG_BUFFER[0]);
+            fflush(stdout);
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
+    }
+    else // parent process
+    {
+        int status;
+        do { waitpid(pid, &status, WUNTRACED); }
+        while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
 
-    // new proc
-    if (pid == 0)
-    {
-        execvp(*ARG_BUFFER.data(), ARG_BUFFER.data());
-        // if there is no error, proc will end inside 'execvp'
-
-        printf("%s: command not found\n", *ARG_BUFFER.data());
-        return false;
-    }
-
-    // old proc
-    if (int status; waitpid(pid, &status, 0) == pid)
-    {
-        return true;
-    }
-
-    return false;
-
+    return true;
 }
 #if 0 // https://brennan.io/2015/01/16/write-a-shell-in-c/
 int lsh_launch(char **args)
@@ -136,42 +135,6 @@ bool eval(UserInput const& u)
 
 static const auto SHELL_PREFIX = "$ "_sv;
 
-string sanitize(strparam line)
-{
-
-
-    if (line.size() < 2)
-        return line.str();
-
-    string s;
-
-    size_t sz = line.size();
-    for (size_t i = 0; i < sz; ++i)
-    {
-        char x = line[i];
-
-        if (i < sz-1)
-        {
-            char y = line[i+1];
-
-            if (x == '\'' && y == '\'')
-            {
-                ++i; continue;
-            }
-
-
-            if (x == '\"' && y == '\"')
-            {
-                ++i; continue;
-            }
-        }
-
-        s += x;
-    }
-    s += line[sz];
-
-    return s;
-}
 
 int main()
 {
