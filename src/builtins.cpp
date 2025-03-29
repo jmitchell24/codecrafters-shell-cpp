@@ -34,21 +34,16 @@ Builtin::Builtin(BuiltinKind kind, cstrparam name, exec_type exec)
     : m_kind{kind}, m_name{name}, m_exec{exec}
 {}
 
-bool Builtin::exec(Command const& c) const
+bool Builtin::exec(Command & c) const
 {
-    auto rdin = c.rdIn();
-    auto rdOut = c.rdOut();
-    auto rdErr = c.rdErr();
 
-    rdin.load();
-    rdOut.load();
-    rdErr.load();
+    c.rdout.load();
+    c.rderr.load();
 
     (this->*m_exec)(c);
 
-    rdin.unload();
-    rdOut.unload();
-    rdErr.unload();
+    c.rdout.unload();
+    c.rderr.unload();
     return true;
 }
 

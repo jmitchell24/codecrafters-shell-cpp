@@ -34,7 +34,7 @@ extern "C"
 
 
 /// return false if shell should stop
-bool eval(Command const& c)
+bool eval(Command & c)
 {
     if (c.empty())
         return false;
@@ -120,9 +120,8 @@ bool tryMakeCommand(strparam s, Command& c)
             auto&& rd = it.asRedirect();
             switch (rd.kind)
             {
-                case TokenRedirect::OUT: command.rdout = rd.filename; break;
-                case TokenRedirect::ERR: command.rderr = rd.filename; break;
-                case TokenRedirect::IN : command.rdin = rd.filename;
+                case TokenRedirect::OUT: command.rdout.filename = rd.filename; command.rdout.append = rd.append; break;
+                case TokenRedirect::ERR: command.rderr.filename = rd.filename; command.rderr.append = rd.append; break;
                 default: nopath_case(TokenRedirect::Kind);
             }
         }

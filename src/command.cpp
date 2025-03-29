@@ -23,38 +23,62 @@ using namespace std;
 //
 // Redirect -> implementation
 //
-Redirect::Redirect(char const* filename, char const* mode, FILE* file)
-    : m_filename{filename}, m_mode{mode}, m_file{file}, m_fd{-1}, m_loaded{false}
+
+FILE* getFILE(Redirect::Kind kind)
 {
-    check(!m_mode.empty(), "mode must not be empty");
-    check(m_file != nullptr, "file must not be null");
+    switch (kind)
+    {
+    case Redirect::ERR: return stderr;
+    case Redirect::OUT: return stdout;
+    default: nopath_case(Redirect::Kind);
+    }
+    return nullptr;
 }
 
 bool Redirect::load()
 {
-    if (m_loaded || m_filename.empty())
+    if (m_loaded || filename.empty())
         return false;
+
+    // get standard file pointer
+    m_file = getFILE(kind);
+
+    // copy original fd
     m_fd = dup(fileno(m_file));
+
+    freopen(filename.c_str(), append ? "a" : "w", m_file);
+
     m_loaded = true;
-    return freopen(m_filename.c_str(), m_mode.c_str(), m_file) != nullptr;
+    return true;
 }
 
 void Redirect::unload()
 {
     if (m_loaded)
     {
+        check(m_file != nullptr, "file must not be null");
+
+        // complete all pending outputs
         fflush(m_file);
+
+        //
         dup2(m_fd, fileno(m_file));
         close(m_fd);
         m_loaded = false;
     }
 }
 
+void Redirect::dbgPrint() const
+{
+    printf("<debug print not implemented>\n");
+}
+
+
 //
 // Command -> implementation
 //
 
-bool Command::execSystem() const
+bool Command::execSystem()
 {
     // https://brennan.io/2015/01/16/write-a-shell-in-c/
     static array<char*, 128> ARG_BUFFER;
@@ -72,14 +96,12 @@ bool Command::execSystem() const
     }
     else if (pid == 0) // child process
     {
-        auto _rdin = rdIn();
-        auto _rdout = rdOut();
-        auto _rderr = rdErr();
+        check(!rdout.loaded(), "redirect should not be loaded rn");
+        check(!rderr.loaded(), "redirect should not be loaded rn");
 
         // load redirects
-        _rdin.load();
-        _rdout.load();
-        _rderr.load();
+        rdout.load();
+        rderr.load();
 
         if (execvp(*ARG_BUFFER.data(), ARG_BUFFER.data()) == -1)
         {
@@ -88,9 +110,8 @@ bool Command::execSystem() const
         }
 
         // unload redirects
-        _rdin.unload();
-        _rdout.unload();
-        _rderr.unload();
+        rdout.unload();
+        rderr.unload();
 
         exit(EXIT_SUCCESS);
     }
@@ -103,10 +124,6 @@ bool Command::execSystem() const
 
     return true;
 }
-
-Redirect Command::rdIn () const { return Redirect{rdin.c_str(),"r", stdin}; }
-Redirect Command::rdOut() const { return Redirect{rdout.c_str(),"w", stdout}; }
-Redirect Command::rdErr() const { return Redirect{rderr.c_str(),"w", stderr}; }
 
 void Command::dbgPrint() const
 {
@@ -123,20 +140,7 @@ void Command::dbgPrint() const
     }
 
 
-
-    if (!rdout.empty())
-        printf("rdout: %s\n", rdout.c_str());
-    else
-        printf("rdout: <not specified>\n");
-
-    if (!rderr.empty())
-        printf("rderr: %s\n", rderr.c_str());
-    else
-        printf("rderr: <not specified>\n");
-
-    if (!rdin.empty())
-        printf("rdin: %s\n", rdin.c_str());
-    else
-        printf("rdin: <not specified>\n");
+    rdout.dbgPrint();
+    rderr.dbgPrint();
     printf("\n");
 }

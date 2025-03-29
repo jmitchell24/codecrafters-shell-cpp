@@ -31,8 +31,13 @@ namespace sh
 
     struct TokenRedirect
     {
-        enum Kind { OUT, IN, ERR } kind = OUT;
+        enum Kind
+        {
+            OUT, OUT_APPEND,
+            ERR, ERR_APPEND
+        } kind = OUT;
         std::string filename;
+        bool append;
     };
 
     struct Token
@@ -56,8 +61,8 @@ namespace sh
         inline static Token makeTokenWord(ut::strparam s)
         { return Token{TokenWord{s.str()}}; }
 
-        inline static Token makeTokenRedirect(TokenRedirect::Kind kind, ut::strparam filename)
-        { return Token{TokenRedirect{kind, filename.str()}}; }
+        inline static Token makeTokenRedirect(TokenRedirect::Kind kind, ut::strparam filename, bool append=false)
+        { return Token{TokenRedirect{kind, filename.str(), append}}; }
 
         inline operator bool() const { return !empty(); }
 

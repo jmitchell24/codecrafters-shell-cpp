@@ -48,7 +48,7 @@ SH_ENUM_BUILTINS
         Builtin(BuiltinKind kind, ut::cstrparam name, exec_type exec);
 
         inline bool valid() const { return m_exec != nullptr; }
-        bool exec(Command const& c) const;
+        bool exec(Command & c) const;
 
         static bool find(ut::strparam name, Builtin& builtin);
 

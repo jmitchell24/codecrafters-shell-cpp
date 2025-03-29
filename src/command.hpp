@@ -22,26 +22,29 @@ namespace sh
     class Redirect
     {
     public:
+        enum Kind { OUT, ERR } kind = OUT;
+        std::string filename = "";
+        bool append = false;
 
-        Redirect(char const* filename, char const* mode, FILE* file);
+        inline bool loaded() const { return m_loaded; }
+
         bool load();
         void unload();
 
+        void dbgPrint() const;
+
     private:
-        std::string     m_filename;
-        std::string     m_mode;
-        FILE*           m_file;
-        int             m_fd;
-        bool            m_loaded;
+        FILE* m_file=nullptr;
+        int   m_fd=-1;
+        bool  m_loaded=false;
     };
 
     struct Command
     {
         using args_type = std::vector<std::string>;
 
-        std::string rdin;
-        std::string rdout;
-        std::string rderr;
+        Redirect rdout;
+        Redirect rderr;
         args_type   args;
 
         inline bool empty() const { return args.empty(); }
@@ -56,11 +59,7 @@ namespace sh
         inline ut::cstrview arg1() const
         { return arity() == 1 ? args[1] : ut::cstrview{}; }
 
-        bool execSystem() const;
-
-        Redirect  rdIn() const;
-        Redirect  rdOut() const;
-        Redirect  rdErr() const;
+        bool execSystem();
 
         void dbgPrint() const;
     };
