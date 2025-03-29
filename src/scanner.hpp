@@ -1,82 +1,90 @@
 //
-// Created by james on 22/03/25.
+// Created by james on 29/03/25.
 //
 
 #pragma once
 
+//
+// std
+//
+#include <variant>
+#include <vector>
+
+//
+// ut
+//
 #include <ut/string.hpp>
+#include <ut/check.hpp>
+
+//
+// sh
+//
+
+
 
 namespace sh
 {
-#if 0
-    /// scans a line of input into the shell
+    struct TokenWord
+    {
+        std::string text = "";
+    };
+
+    struct TokenRedirect
+    {
+        enum Kind { OUT, IN, ERR } kind = OUT;
+        std::string filename;
+    };
+
+    struct Token
+    {
+        using variant_type = std::variant<
+            std::monostate,
+            TokenWord,
+            TokenRedirect
+            >;
+
+        inline bool empty() const { return data.index() == 0; }
+        inline bool isWord() const { return data.index() == 1; }
+        inline bool isRedirect() const { return data.index() == 2; }
+
+        inline TokenWord& asWord() { return get<1>(data); }
+        inline TokenRedirect& asRedirect() { return get<2>(data); }
+
+        inline static Token makeEmptyToken()
+        { return Token{}; }
+
+        inline static Token makeTokenWord(ut::strparam s)
+        { return Token{TokenWord{s.str()}}; }
+
+        inline static Token makeTokenRedirect(TokenRedirect::Kind kind, ut::strparam filename)
+        { return Token{TokenRedirect{kind, filename.str()}}; }
+
+        inline operator bool() const { return !empty(); }
+
+        variant_type data;
+    };
+
     class Scanner
     {
     public:
-        Scanner(ut::strparam line);
+        Scanner();
+        Scanner(ut::strparam s);
 
-        /// returns true if token was found. false means scanner has reached end of line
-        bool nextToken(std::string& token);
-
-
-        bool isAtEnd() const { return cursor == text_end; }
-        void advance() { check(!isAtEnd(), "end of line"); ++cursor; }
-        char peek() const { check(!isAtEnd(), "end of line"); return *cursor; }
-
-        /// returns false if at end of line
-        bool takeWhitespace()
-        {
-            while (!isAtEnd())
-            {
-                if (iswspace(peek()))
-                    advance();
-                else
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// returns false if at end of line
-        bool takeQuotes(string& token)
-        {
-            check(peek() == '\'', "not quoted");
-            advance();
-
-            char const* token_begin = cursor;
-
-            while (!isAtEnd())
-            {
-                if (peek() != '\'')
-                    advance();
-                else
-                {
-                    token = strview{token_begin, cursor}.str();
-                    advance();
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        Token scan();
 
     private:
-        char const* m_text;
-        char const* m_text_end;
-        char const* m_arg_start;
-        char const* m_arg_current;
+        using literals_type = std::vector<std::string>;
 
+        literals_type   m_literals;
+        size_t          m_loc;
 
-        bool whitespace();
+        static bool tryUnquoteLiterals(ut::strparam s, literals_type& result);
 
-
-        char next();
-        bool nextIf(char expected);
-        bool nextIf(ut::strparam expected);
-
+        ut::strparam next();
+        bool nextIf(ut::strparam s);
         bool isAtEnd() const;
-        char peek() const;
-        char peekNext() const;
+        size_t hasNext() const;
+        ut::strparam peek() const;
+        ut::strparam peekNext() const;
     };
-#endif
 }

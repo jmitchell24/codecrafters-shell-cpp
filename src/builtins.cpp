@@ -34,9 +34,22 @@ Builtin::Builtin(BuiltinKind kind, cstrparam name, exec_type exec)
     : m_kind{kind}, m_name{name}, m_exec{exec}
 {}
 
-void Builtin::exec(UserInput const& u) const
+bool Builtin::exec(Command const& c) const
 {
-    (this->*m_exec)(u);
+    auto rdin = c.rdIn();
+    auto rdOut = c.rdOut();
+    auto rdErr = c.rdErr();
+
+    rdin.load();
+    rdOut.load();
+    rdErr.load();
+
+    (this->*m_exec)(c);
+
+    rdin.unload();
+    rdOut.unload();
+    rdErr.unload();
+    return true;
 }
 
 
@@ -60,9 +73,9 @@ SH_ENUM_BUILTINS
     return false;
 }
 
-void Builtin::execECHO(UserInput const& u) const
+void Builtin::execECHO(Command const& c) const
 {
-    auto&& tokens = u.tokens();
+    auto&& tokens = c.args;
     for (size_t i = 1; i < tokens.size(); ++i)
     {
         auto&& it = tokens[i];
@@ -71,11 +84,11 @@ void Builtin::execECHO(UserInput const& u) const
     printf("\n");
 }
 
-void Builtin::execEXIT(UserInput const& u) const
+void Builtin::execEXIT(Command const& c) const
 {
-     if (u.isUnary())
+     if (c.isUnary())
      {
-         auto arg_text = u.arg1();
+         auto arg_text = c.arg1();
          int code = 0;
          if (from_chars(arg_text.begin(), arg_text.end(), code).ec == errc{})
              exit(code);
@@ -84,7 +97,7 @@ void Builtin::execEXIT(UserInput const& u) const
      exit(EXIT_SUCCESS);
 }
 
-void Builtin::execPWD(UserInput const& u) const
+void Builtin::execPWD(Command const& c) const
 {
     static array<char, 1000> BUFFER;
 
@@ -93,7 +106,7 @@ void Builtin::execPWD(UserInput const& u) const
     printf("%s\n", BUFFER.data());
 }
 
-void Builtin::execCD(UserInput const& u) const
+void Builtin::execCD(Command const& c) const
 {
     static char const* ENV_HOME = []
     {
@@ -102,11 +115,11 @@ void Builtin::execCD(UserInput const& u) const
         return "";
     }();
 
-    if (u.isUnary())
+    if (c.isUnary())
     {
         string arg;
 
-        for (auto&& it: u.arg1())
+        for (auto&& it: c.arg1())
         {
             if (it == '~')
                 arg += ENV_HOME;
@@ -123,12 +136,9 @@ void Builtin::execCD(UserInput const& u) const
 
 }
 
-void Builtin::execTEST(UserInput const& u) const
+void Builtin::execTEST(Command const& c) const
 {
-    for (auto&& it: u.tokens())
-    {
-        cout << "tok: '" << it << "'\n";
-    }
+    c.dbgPrint();
 
 }
 
@@ -162,11 +172,11 @@ bool fileExists(cstrparam dir_path, strparam filename)
     return false;
 }
 
-void Builtin::execTYPE(UserInput const& u) const
+void Builtin::execTYPE(Command const& c) const
 {
-    if (u.arity() > 0)
+    if (c.arity() > 0)
     {
-        auto&& arg = u.arg1();
+        auto&& arg = c.arg1();
 
         //
         // check for builtin

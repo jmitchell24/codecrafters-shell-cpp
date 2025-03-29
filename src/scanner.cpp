@@ -1,5 +1,5 @@
 //
-// Created by james on 22/03/25.
+// Created by james on 29/03/25.
 //
 
 //
@@ -11,98 +11,166 @@ using namespace sh;
 //
 // ut
 //
-//using namespace ut;
-
+using namespace ut;
 
 //
 // std
 //
 using namespace std;
 
+
+
+
+
 //
-// Scanner -> Implementation
+// Scanner -> implementation
 //
 
-#if 0
-    class Scanner
+Scanner::Scanner()
+{ }
+
+Scanner::Scanner(strparam s)
+    : m_literals{}, m_loc{0}
+{
+    tryUnquoteLiterals(s, m_literals);
+}
+
+Token Scanner::scan()
+{
+    Token token;
+
+    if (!isAtEnd())
     {
-        char const* text;
-        char const* text_end;
-        char const* cursor;
+        if (nextIf("1>"_sv) || nextIf(">"_sv))
+            token = Token::makeTokenRedirect(TokenRedirect::OUT, next());
+        else
+            token = Token::makeTokenWord(next());
+    }
+
+    return token;
+}
+
+strparam Scanner::next()
+{
+    if (m_loc < m_literals.size())
+        return m_literals[m_loc++];
+    return m_literals[m_loc];
+}
+
+bool Scanner::nextIf(strparam s)
+{
+    if (m_loc < m_literals.size() && s == m_literals[m_loc])
+    {
+        ++m_loc;
+        return true;
+    }
+
+    return false;
+}
+
+bool Scanner::isAtEnd() const
+{
+    return !(m_loc < m_literals.size());
+}
+
+size_t Scanner::hasNext() const
+{
+    return m_loc < m_literals.size()-1;
+}
 
 
-        static Scanner make(strparam line)
+strparam Scanner::peek() const
+{
+    check(m_loc < m_literals.size(), "no current literal to peek");
+    return m_literals[m_loc];
+}
+
+strparam Scanner::peekNext() const
+{
+    check(m_loc < m_literals.size()-1, "no next literal to peek");
+    return m_literals[m_loc+1];
+}
+
+bool Scanner::tryUnquoteLiterals(strparam s, literals_type& result)
+{
+    vector<std::string> literals;
+    string current_literal;
+
+    enum QuoteState { QS_NONE, QS_SINGLE, QS_DOUBLE };
+
+    QuoteState quote_state = QS_NONE;
+    bool escaped = false;
+
+    for (auto&& it: s)
+    {
+        // Handle escape character
+        if (escaped)
         {
-            return Scanner{ line.begin(), line.end(), line.begin() };
-        }
-
-        /// returns true if token was found. false means scanner has reached end of line
-        bool nextToken(string& token)
-        {
-            // advance through whitespace
-
-            if (!takeWhitespace())
-                return false;
-
-            // quote handling
-
-            if (peek() == '\'')
-                return takeQuotes(token);
-
-            // advance and take token
-
-            char const* token_begin = cursor;
-            while (!isAtEnd())
+            // In double quotes, only certain characters are treated specially when escaped
+            if (quote_state == QS_DOUBLE)
             {
-                if (iswspace(peek()))
-                    break;
-                advance();
-            }
-
-            token = strview{token_begin, cursor}.str();
-            return true;
-        }
-
-
-        bool isAtEnd() const { return cursor == text_end; }
-        void advance() { check(!isAtEnd(), "end of line"); ++cursor; }
-        char peek() const { check(!isAtEnd(), "end of line"); return *cursor; }
-
-        /// returns false if at end of line
-        bool takeWhitespace()
-        {
-            while (!isAtEnd())
-            {
-                if (iswspace(peek()))
-                    advance();
-                else
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// returns false if at end of line
-        bool takeQuotes(string& token)
-        {
-            check(peek() == '\'', "not quoted");
-            advance();
-
-            char const* token_begin = cursor;
-
-            while (!isAtEnd())
-            {
-                if (peek() != '\'')
-                    advance();
+                // In double quotes, \ only escapes $, `, ", \, and newline
+                if (it == '$' || it == '`' || it == '"' || it == '\\' || it == '\n')
+                {
+                    current_literal += it;
+                }
                 else
                 {
-                    token = strview{token_begin, cursor}.str();
-                    advance();
-                    return true;
+                    // Otherwise, both the backslash and the character are preserved
+                    current_literal += '\\';
+                    current_literal += it;
                 }
             }
-
-            return false;
+            else
+            {
+                // Outside quotes or in single quotes, \ escapes any character
+                current_literal += it;
+            }
+            escaped = false;
+            continue;
         }
-    };
-#endif
+
+        // Check for escape character
+        if (it == '\\' && quote_state != QS_SINGLE)
+        {
+            escaped = true;
+            continue;
+        }
+
+        // Handle quotes
+             if (it == '\'' && quote_state == QS_NONE)   { quote_state = QS_SINGLE; continue; }
+        else if (it == '\'' && quote_state == QS_SINGLE) { quote_state = QS_NONE;   continue; }
+        else if (it == '"'  && quote_state == QS_NONE)   { quote_state = QS_DOUBLE; continue; }
+        else if (it == '"'  && quote_state == QS_DOUBLE) { quote_state = QS_NONE;   continue; }
+
+        // Handle whitespace outside of quotes
+        if (isspace(it) && quote_state == QS_NONE)
+        {
+            if (!current_literal.empty())
+            {
+                literals.push_back(current_literal);
+                current_literal.clear();
+            }
+            continue;
+        }
+
+        // Add character to current token
+        current_literal += it;
+    }
+
+    // Handle any remaining escaped character at the end
+    if (escaped)
+        current_literal += '\\';
+
+    // Add the last token if not empty
+    if (!current_literal.empty())
+        literals.push_back(current_literal);
+
+    // Error state: unclosed quotes (bash would prompt for more input)
+    if (quote_state != QS_NONE)
+        return false;
+
+    result = std::move(literals);
+    return true;
+}
+

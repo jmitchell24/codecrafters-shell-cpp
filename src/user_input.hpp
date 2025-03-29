@@ -16,17 +16,25 @@
 
 #include "ut/check.hpp"
 
+//
+// std
+//
+#include <variant>
+
 namespace sh
 {
+
+
+
+
+
     class UserInput
     {
     public:
         using token_type = std::string;
         using tokens_type = std::vector<token_type>;
 
-        UserInput(ut::strparam line)
-            : m_tokens{tokenizeLine2(line)}
-        {}
+        explicit UserInput(ut::strparam line);
 
         inline UserInput(UserInput const&)=default;
         inline UserInput(UserInput&&)=default;
@@ -37,6 +45,10 @@ namespace sh
         inline size_t arity() const { return empty() ? 0 : m_tokens.size()-1; }
         inline bool isUnary() const { return arity() == 1; }
         inline bool isBinary() const { return arity() == 2; }
+
+        inline std::string const& rdin() const { return m_rdin; }
+        inline std::string const& rdout() const { return m_rdout; }
+        inline std::string const& rderr() const { return m_rderr; }
 
         /// the first token of user input (builtin name, program name, etc...)
         inline ut::cstrview name() const
@@ -59,10 +71,15 @@ namespace sh
         }
 
     private:
+        std::string m_rdin;
+        std::string m_rdout;
+        std::string m_rderr;
         tokens_type m_tokens;
 
         static tokens_type tokenizeLine(ut::strparam line);
-        static tokens_type tokenizeLine2(ut::strparam line);
 
+
+        using texts_type = std::vector<std::string>;
+        static bool tryUnquoteLine(ut::strparam line, texts_type& texts);
     };
 }

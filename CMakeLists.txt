@@ -1,20 +1,23 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(shell-starter-cpp)
+set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 
 file (
         GLOB_RECURSE SOURCE_FILES
-        src/*.cpp src/*.hpp
+        src/*.cpp
+        src/*.hpp
+        src/*.h
+        src/*.c
+
 )
 
-set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
+
 add_executable(shell ${SOURCE_FILES}
-        src/builtins.hpp
-        src/builtins.cpp
-        src/user_input.hpp
-        src/user_input.cpp
         src/scanner.hpp
-        src/scanner.cpp)
+        src/scanner.cpp
+        src/command.hpp
+        src/command.cpp)
 
 include(FetchContent)
 

@@ -7,7 +7,7 @@
 //
 // sh
 //
-#include "user_input.hpp"
+#include "command.hpp"
 
 //
 // ut
@@ -42,13 +42,13 @@ SH_ENUM_BUILTINS
     class Builtin
     {
     public:
-        using exec_type = void(Builtin::*)(UserInput const&) const;
+        using exec_type = void(Builtin::*)(Command const&) const;
 
         Builtin();
         Builtin(BuiltinKind kind, ut::cstrparam name, exec_type exec);
 
         inline bool valid() const { return m_exec != nullptr; }
-        void exec(UserInput const& u) const;
+        bool exec(Command const& c) const;
 
         static bool find(ut::strparam name, Builtin& builtin);
 
@@ -61,7 +61,7 @@ SH_ENUM_BUILTINS
         // Forward Decls
         //
 
-#define BUILTIN(a_, b_) void exec##a_(UserInput const&) const;
+#define BUILTIN(a_, b_) void exec##a_(Command const&) const;
         SH_ENUM_BUILTINS
 #undef BUILTIN
     };
