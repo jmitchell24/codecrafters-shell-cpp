@@ -43,6 +43,8 @@ Token Scanner::scan()
     {
         if (nextIf("1>"_sv) || nextIf(">"_sv))
             token = Token::makeTokenRedirect(TokenRedirect::OUT, next());
+        else if (nextIf("2>"_sv))
+            token = Token::makeTokenRedirect(TokenRedirect::ERR, next());
         else
             token = Token::makeTokenWord(next());
     }
