@@ -29,7 +29,7 @@ UserInput::UserInput(ut::strparam line) :
     m_rdout{},
     m_rderr{},
     m_tokens{tokenizeLine(line)}
-{}
+{ }
 
 /*
 std::pair<bool, int> parse_redirect(std::string_view input) {

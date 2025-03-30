@@ -35,13 +35,17 @@ FILE* getFILE(Redirect::Kind kind)
     return nullptr;
 }
 
+Redirect::Redirect(Kind kind)
+    : m_kind{kind}, m_file{nullptr}, m_fd{-1}, m_loaded{false}
+{ }
+
 bool Redirect::load()
 {
     if (m_loaded || filename.empty())
         return false;
 
     // get standard file pointer
-    m_file = getFILE(kind);
+    m_file = getFILE(m_kind);
 
     // copy original fd
     m_fd = dup(fileno(m_file));

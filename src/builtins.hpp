@@ -20,7 +20,9 @@
     BUILTIN(TYPE, "type") \
     BUILTIN(PWD , "pwd" ) \
     BUILTIN(CD  , "cd"  ) \
-    BUILTIN(TEST, "test")
+    BUILTIN(TEST, "test") \
+    BUILTIN(ERR , "err")
+
 
 namespace sh
 {

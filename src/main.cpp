@@ -120,8 +120,16 @@ bool tryMakeCommand(strparam s, Command& c)
             auto&& rd = it.asRedirect();
             switch (rd.kind)
             {
-                case TokenRedirect::OUT: command.rdout.filename = rd.filename; command.rdout.append = rd.append; break;
-                case TokenRedirect::ERR: command.rderr.filename = rd.filename; command.rderr.append = rd.append; break;
+                case TokenRedirect::OUT:
+                    command.rdout.filename = rd.filename;
+                    command.rdout.append = rd.append;
+                    break;
+
+                case TokenRedirect::ERR:
+                    command.rderr.filename = rd.filename;
+                    command.rderr.append = rd.append;
+                    break;
+
                 default: nopath_case(TokenRedirect::Kind);
             }
         }

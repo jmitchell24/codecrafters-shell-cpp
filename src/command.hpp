@@ -22,7 +22,10 @@ namespace sh
     class Redirect
     {
     public:
-        enum Kind { OUT, ERR } kind = OUT;
+        enum Kind { OUT, ERR };
+
+        Redirect(Kind kind);
+
         std::string filename = "";
         bool append = false;
 
@@ -34,17 +37,18 @@ namespace sh
         void dbgPrint() const;
 
     private:
-        FILE* m_file=nullptr;
-        int   m_fd=-1;
-        bool  m_loaded=false;
+        Kind  m_kind;
+        FILE* m_file;
+        int   m_fd;
+        bool  m_loaded;
     };
 
     struct Command
     {
         using args_type = std::vector<std::string>;
 
-        Redirect rdout;
-        Redirect rderr;
+        Redirect rdout{Redirect::OUT};
+        Redirect rderr{Redirect::ERR};
         args_type   args;
 
         inline bool empty() const { return args.empty(); }

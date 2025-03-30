@@ -137,6 +137,17 @@ void Builtin::execTEST(Command const& c) const
 
 }
 
+void Builtin::execERR(Command const& c) const
+{
+    auto&& tokens = c.args;
+    for (size_t i = 1; i < tokens.size(); ++i)
+    {
+        auto&& it = tokens[i];
+        fprintf(stderr, "%.*s ", it.size(), it.data());
+    }
+    fprintf(stderr, "\n");
+}
+
 
 
 

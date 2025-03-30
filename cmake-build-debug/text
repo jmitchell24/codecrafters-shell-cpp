@@ -1,2 +1,5 @@
-Linux jm-workstation 6.12.11-204.nobara.fc40.x86_64 #1 SMP PREEMPT_DYNAMIC Sun Jan 26 00:15:36 UTC 2025 x86_64 GNU/Linux
-Linux jm-workstation 6.12.11-204.nobara.fc40.x86_64 #1 SMP PREEMPT_DYNAMIC Sun Jan 26 00:15:36 UTC 2025 x86_64 GNU/Linux
+command: 
+args 0: test
+<debug print not implemented>
+<debug print not implemented>
+
