@@ -17,6 +17,7 @@ using namespace ut;
 //
 // std
 //
+#include <filesystem>
 using namespace std;
 
 //
@@ -116,19 +117,58 @@ void Shell::addHistory(strparam line)
 
 }
 
-
-static bool autoComplete(strparam line_part, strparam& line)
+vector<string> getPathExes()
 {
-    if (line_part == "ech"_sv)
+    namespace fs = std::filesystem;
+
+    auto path_var = string(getenv("PATH"));
+    auto paths = trimsplit::container(path_var, [](auto&& it)
+    {
+       return it == ':';
+    });
+
+    vector<string> exes;
+
+    for (auto&& it: paths)
+    {
+        auto path = it.str();
+
+        if (fs::exists(path) && fs::is_directory(path))
+        {
+            for (auto&& entry : fs::directory_iterator(path))
+            {
+                if (entry.is_regular_file())
+                    exes.push_back(entry.path().filename().string());
+            }
+        }
+    }
+
+    return exes;
+}
+
+static bool autoComplete(strparam prefix, string& line)
+{
+    if (prefix == "ech"_sv)
     {
         line = "echo "_sv;
         return true;
     }
 
-    if (line_part == "exi"_sv)
+    if (prefix == "exi"_sv)
     {
         line = "exit "_sv;
         return true;
+    }
+
+    for (auto&& it: getPathExes())
+    {
+        auto sv = strview(it);
+        if (sv.size() >= prefix.size() && sv.beginsWith(prefix))
+        {
+            line = it;
+            line += ' ';
+            return true;
+        }
     }
 
     return false;
@@ -150,13 +190,13 @@ bool Shell::getLine(string& line)
         {
             case '\t':
                 //nopath_impl;
-                if (strparam ac_line; autoComplete(buffer, ac_line))
+                if (string ac_line; autoComplete(buffer, ac_line))
                 {
                     auto line_reset = "\x1B[0G\x1B[2K"_sv;
                     rawWrite(line_reset);
                     rawWrite(prompt);
                     rawWrite(ac_line);
-                    buffer = ac_line.str();
+                    buffer = ac_line;
 
                 }
                 else
