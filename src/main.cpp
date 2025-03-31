@@ -1,6 +1,7 @@
 #include "builtins.hpp"
 #include "command.hpp"
 #include "user_input.hpp"
+#include "shell.hpp"
 using namespace sh;
 
 
@@ -141,40 +142,18 @@ bool tryMakeCommand(strparam s, Command& c)
 
 int main()
 {
+    SHELL.load();
 
-    linenoiseHistorySetMaxLen(1000);
-
-
-
-    char* line = nullptr;
-    while((line = linenoiseCodeCrafters(SHELL_PREFIX.c_str())) != nullptr)
+    string line;
+    while(SHELL.getLine(line))
     {
-        if (Command c; tryMakeCommand(cstrparam(line), c))
+        if (Command c; tryMakeCommand(line, c))
         {
-            //c.dbgPrint();
             if (eval(c))
-                linenoiseHistoryAdd(line);
+                SHELL.addHistory(line);
         }
-
-        linenoiseFree(line);
     }
 
-
-
+    SHELL.unload();
     return EXIT_SUCCESS;
-//    string user_input_text;
-//
-//    do
-//    {
-//        if (auto u = UserInput(user_input_text); !u.empty())
-//        {
-//            if (!eval(u))
-//                break;
-//        }
-//
-//        printf("%.*s", SHELL_PREFIX.size(), SHELL_PREFIX.data());
-//    }
-//    while (getline(cin, user_input_text));
-//
-//    return EXIT_FAILURE;
 }

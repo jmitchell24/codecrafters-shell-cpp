@@ -1214,13 +1214,15 @@ char *linenoise(const char *prompt) {
 char *linenoiseCodeCrafters(const char *prompt) {
     char buf[LINENOISE_MAX_LINE];
 
-#if 0
+#define CODE_CRAFTERS_SWITCH 1
+
+#if CODE_CRAFTERS_SWITCH==0
     /* Not a tty: read from file / pipe. In this mode we don't want any
      * limit to the line size, so we call a function to handle that. */
     return linenoiseNoTTY();
 #endif
 
-#if 1
+#if CODE_CRAFTERS_SWITCH==1
     size_t len;
 
     printf("%s",prompt);
@@ -1234,7 +1236,7 @@ char *linenoiseCodeCrafters(const char *prompt) {
     return strdup(buf);
 #endif
 
-#if 0
+#if CODE_CRAFTERS_SWITCH==2
     char *retval = linenoiseBlockingEdit(STDIN_FILENO,STDOUT_FILENO,buf,LINENOISE_MAX_LINE,prompt);
     return retval;
 #endif

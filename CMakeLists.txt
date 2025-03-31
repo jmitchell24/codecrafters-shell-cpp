@@ -17,7 +17,9 @@ add_executable(shell ${SOURCE_FILES}
         src/scanner.hpp
         src/scanner.cpp
         src/command.hpp
-        src/command.cpp)
+        src/command.cpp
+        src/shell.hpp
+        src/shell.cpp)
 
 include(FetchContent)
 
