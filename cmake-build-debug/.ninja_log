@@ -29,3 +29,6 @@
 1	4	1743428619741762437	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
 5	708	1743428619745762418	CMakeFiles/shell.dir/src/shell.cpp.o	c51c125f6c65445d
 708	761	1743428620448759143	shell	753e27fac5ddfaf
+1	3	1743428977876094198	/home/james/sync/Projects/cpp/codecrafters-shell-cpp/cmake-build-debug/CMakeFiles/cmake.verify_globs	e89a6dfb083ff951
+5	699	1743428977880094179	CMakeFiles/shell.dir/src/shell.cpp.o	c51c125f6c65445d
+699	754	1743428978574090946	shell	753e27fac5ddfaf

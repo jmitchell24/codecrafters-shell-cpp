@@ -159,6 +159,10 @@ bool Shell::getLine(string& line)
                     buffer = ac_line.str();
 
                 }
+                else
+                {
+                    rawWrite("\a"_sv);
+                }
                 break;
 
             case 127:
