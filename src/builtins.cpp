@@ -53,7 +53,7 @@ bool Builtin::find(strparam name, Builtin& builtin)
     static array const BUILTINS =
     {
 #define BUILTIN(a_, b_)  Builtin{ BUILTIN_##a_, b_, &Builtin::exec##a_ },
-SH_ENUM_BUILTINS
+SH_EXPAND_ENUM_BUILTINS
 #undef BUILTIN
     };
 

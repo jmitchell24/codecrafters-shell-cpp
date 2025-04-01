@@ -6,6 +6,8 @@
 // sh
 //
 #include "shell.hpp"
+
+#include "builtins.hpp"
 using namespace sh;
 
 //
@@ -17,6 +19,8 @@ using namespace ut;
 //
 // std
 //
+#include <set>
+#include <variant>
 #include <filesystem>
 using namespace std;
 
@@ -117,47 +121,144 @@ void Shell::addHistory(strparam line)
 
 }
 
-vector<string> getPathExes()
+struct AutoCompleteResult
 {
-    namespace fs = std::filesystem;
 
-    auto path_var = string(getenv("PATH"));
-    auto paths = trimsplit::container(path_var, [](auto&& it)
+};
+
+struct AutoComplete
+{
+    struct DoNothing    {};
+    struct RingBell     {};
+    struct ReplaceLine  { string line; };
+    struct PrintHints   { vector<string> hints; };
+
+    enum ResultType { DO_NOTHING, RING_BELL, REPLACE_LINE, PRINT_HINTS };
+
+    using result_type = variant<DoNothing, RingBell, ReplaceLine, PrintHints>;
+
+    using hints_type = vector<string>;
+    hints_type hints;
+
+    result_type onTab(bool is_repeat, strparam prefix)
     {
-       return it == ':';
-    });
+        if (prefix.empty())
+            return DoNothing{};
 
-    vector<string> exes;
-
-    for (auto&& it: paths)
-    {
-        auto path = it.str();
-
-        if (fs::exists(path) && fs::is_directory(path))
+        if (!is_repeat)
         {
-            for (auto&& entry : fs::directory_iterator(path))
+            auto comps = makeComps();
+            for (auto&& it: comps)
             {
-                if (entry.is_regular_file())
-                    exes.push_back(entry.path().filename().string());
+                if (auto sv = strview(it); sv.size() >= prefix.size() && sv.beginsWith(prefix))
+                {
+                    hints.push_back(it);
+                }
             }
+
+
+
+            if (hints.size() == 1)
+                return ReplaceLine{hints[0] + " "};
+
+            if (hints.size() > 1)
+                return RingBell{};
         }
+
+        if (!hints.empty())
+        {
+            check(hints.size() > 1, "hints should never have just 1 element");
+            auto res = PrintHints{hints};
+            hints.clear();
+            return res;
+        }
+
+        return RingBell{};
     }
 
-    return exes;
-}
+    set<string> makeComps()
+    {
+        set<string> comps
+        {
+#define BUILTIN(a_, b_) b_,
+    SH_EXPAND_ENUM_BUILTINS
+#undef BUILTIN
+        };
 
-static bool autoComplete(strparam prefix, string& line)
+        for (auto&& it : getPathExes())
+            comps.insert(it);
+        return comps;
+    }
+
+    vector<string> getPathExes()
+    {
+        namespace fs = std::filesystem;
+
+        auto path_var = string(getenv("PATH"));
+        auto paths = trimsplit::container(path_var, [](auto&& it)
+        {
+           return it == ':';
+        });
+
+        vector<string> exes;
+
+        for (auto&& it: paths)
+        {
+            auto path = it.str();
+
+            if (fs::exists(path) && fs::is_directory(path))
+            {
+                for (auto&& entry : fs::directory_iterator(path))
+                {
+                    if (entry.is_regular_file())
+                        exes.push_back(entry.path().filename().string());
+                }
+            }
+        }
+
+        return exes;
+    }
+
+
+} static g_auto_complete;
+
+#if 0
+enum AutoCompleteAction
 {
+    AC_REPLACE,
+    AC_PROMPT
+};
+
+static AutoCompleteAction autoComplete(strparam prefix, string& line)
+{
+    static vector<string> complete_options;
+    static bool armed=false;
+
+    if (armed)
+    {
+        line = prefix.str();
+        line += '\n';
+        for (auto&& it: complete_options)
+        {
+            line += it;
+            line += ' ';
+        }
+        return AC_REPLACE;
+    }
+
+    complete_options.clear();
+    armed = false;
+
     if (prefix == "ech"_sv)
     {
         line = "echo "_sv;
-        return true;
+        return AC_REPLACE;
     }
 
     if (prefix == "exi"_sv)
     {
         line = "exit "_sv;
-        return true;
+        return AC_REPLACE;
     }
 
     for (auto&& it: getPathExes())
@@ -165,14 +266,37 @@ static bool autoComplete(strparam prefix, string& line)
         auto sv = strview(it);
         if (sv.size() >= prefix.size() && sv.beginsWith(prefix))
         {
-            line = it;
-            line += ' ';
-            return true;
+            complete_options.push_back(it);
         }
     }
 
+    if (complete_options.size() == 1)
+    {
+        line = complete_options[0];
+        line += ' ';
+        return AC_REPLACE;
+    }
+    else if (complete_options.size() > 1)
+    {
+        if (!armed)
+        {
+            armed = true;
+        }
+        else
+        {
+
+        }
+        if (armed)
+        {
+            line +
+            return AC_REPLACE;
+        }
+    }
+
+
     return false;
 }
+#endif
 
 bool Shell::getLine(string& line)
 {
@@ -182,30 +306,52 @@ bool Shell::getLine(string& line)
     rawWrite(prompt);
 
     string buffer;
+
+    char prev_c=0, c=0;
+
     for (;;)
     {
-        char c = rawRead();
+        prev_c = c;
+        c = rawRead();
 
         switch (c)
         {
-            case '\t':
-                //nopath_impl;
-                if (string ac_line; autoComplete(buffer, ac_line))
+            case '\t': // tab
+                switch (auto ac = g_auto_complete.onTab(prev_c == c, buffer); ac.index())
                 {
-                    auto line_reset = "\x1B[0G\x1B[2K"_sv;
-                    rawWrite(line_reset);
-                    rawWrite(prompt);
-                    rawWrite(ac_line);
-                    buffer = ac_line;
+                    case AutoComplete::DO_NOTHING:
+                        break; // noop
 
-                }
-                else
-                {
-                    rawWrite("\a"_sv);
+                    case AutoComplete::RING_BELL:
+                        rawWrite("\a"_sv);
+                        break;
+
+                    case AutoComplete::PRINT_HINTS:
+                        rawWrite("\n"_sv);
+                        for (auto&& it: get<AutoComplete::PrintHints>(ac).hints)
+                        {
+                            rawWrite(it);
+                            rawWrite("  "_sv);
+                        }
+                        rawWrite("\n"_sv);
+                        rawWrite(prompt);
+                        rawWrite(buffer);
+                        break;
+
+                    case AutoComplete::REPLACE_LINE:
+                        {
+                            auto line_reset = "\x1B[0G\x1B[2K"_sv;
+                            auto ac_line = get<AutoComplete::ReplaceLine>(ac).line;
+                            rawWrite(line_reset);
+                            rawWrite(prompt);
+                            rawWrite(ac_line);
+                            buffer = ac_line;
+                        }
+                        break;
                 }
                 break;
 
-            case 127:
+            case 127: // backspace
                 if (!buffer.empty())
                 {
                     buffer.pop_back();
@@ -213,20 +359,20 @@ bool Shell::getLine(string& line)
                 }
                 break;
 
-            case CTRL_KEY('c'):
+            case CTRL_KEY('c'): // ctrl+c
                 exit(EXIT_SUCCESS);
                 break;
 
             case '\0':
             case '\r':
-            case '\n':
+            case '\n': // newline / eof
                 line = buffer;
                 rawWrite("\n"_sv);
                 disableRawMode();
 
                 return true;
 
-            default:
+            default: // everything else...
                 buffer += c;
                 rawWrite(&c, 1);
                 break;

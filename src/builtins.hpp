@@ -14,7 +14,7 @@
 //
 #include <ut/string/view.hpp>
 
-#define SH_ENUM_BUILTINS  \
+#define SH_EXPAND_ENUM_BUILTINS  \
     BUILTIN(EXIT, "exit") \
     BUILTIN(ECHO, "echo") \
     BUILTIN(TYPE, "type") \
@@ -33,7 +33,7 @@ namespace sh
     enum BuiltinKind
     {
 #define BUILTIN(a_, b_) BUILTIN_##a_,
-SH_ENUM_BUILTINS
+SH_EXPAND_ENUM_BUILTINS
 #undef BUILTIN
     };
 
@@ -64,7 +64,7 @@ SH_ENUM_BUILTINS
         //
 
 #define BUILTIN(a_, b_) void exec##a_(Command const&) const;
-        SH_ENUM_BUILTINS
+SH_EXPAND_ENUM_BUILTINS
 #undef BUILTIN
     };
 }
