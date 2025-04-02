@@ -60,17 +60,6 @@ struct TrieNode
         }
         children.clear();
     }
-
-    // size_t getDescendantCount() const
-    // {
-    //     if (children.empty())
-    //         return 0;
-    //
-    //     size_t count=0;
-    //     for (auto&& [k,v]: children)
-    //         count += v->getDescendantCount();
-    //     return count;
-    // }
 } ;
 
 struct Trie
@@ -120,26 +109,6 @@ struct Trie
         }
 
         return current;
-    }
-
-
-
-    void printLexical(TrieNode* current, string prefix, string suffix)
-    {
-        if (current->is_end && !suffix.empty())
-        {
-            //cout << (prefix + suffix) << endl;
-        }
-
-        for (auto&& [k,v]: current->children)
-        {
-            string temp = suffix;
-            if (v != nullptr)
-            {
-                temp += v->character;
-                printLexical(v, prefix, temp);
-            }
-        }
     }
 
     bool findSingleHint(TrieNode* current, string const& prefix, string& hint)
@@ -200,46 +169,6 @@ SH_EXPAND_ENUM_BUILTINS
     return comps;
 }
 
-#if 0
-AutoComplete::Result AutoComplete::onTab(bool is_repeat, strparam prefix)
-{
-    if (prefix.empty())
-        return { DoNothing{} };
-
-    if (!is_repeat)
-    {
-        auto comps = makeComps();
-        for (auto&& it: comps)
-        {
-            if (auto sv = strview(it); sv.size() >= prefix.size() && sv.beginsWith(prefix))
-            {
-                m_hints.push_back(it);
-            }
-            g_trie.insert(it);
-        }
-
-
-
-        if (m_hints.size() == 1)
-            return {ReplaceLine{m_hints[0] + " "}};
-
-        if (m_hints.size() > 1)
-            return {RingBell{}};
-    }
-
-    if (!m_hints.empty())
-    {
-        check(m_hints.size() > 1, "hints should never have just 1 element");
-        auto res = Result{ PrintHints{m_hints} };
-        m_hints.clear();
-        g_trie.clear();
-        return res;
-    }
-
-    return { RingBell{} };
-}
-#endif
-
 AutoComplete::Result AutoComplete::onTab(bool is_repeat, string const& prefix)
 {
     if (prefix.empty())
@@ -278,28 +207,3 @@ AutoComplete::Result AutoComplete::onTab(bool is_repeat, string const& prefix)
 
     return { RingBell{} };
 }
-
-// void AutoComplete::debug(string& output, strparam prefix)
-// {
-//     auto comps = makeComps();
-//
-//     g_trie.clear();
-//     for (auto&& it : comps)
-//         g_trie.insert(it);
-//
-//     auto x = g_trie.search(prefix.str());
-//
-//
-//
-//     if (x == nullptr)
-//         output = "prefix not found!";
-//     else
-//     {
-//         hints_type hints;
-//         g_trie.findHints(x, prefix.str(), hints);
-//
-//         output.clear();
-//         for (auto&& it: hints)
-//             output += it + " ";
-//     }
-// }

@@ -45,6 +45,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+junk
 build
 cmake-build-debug
 vcpkg_installed
