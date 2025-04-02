@@ -6,6 +6,8 @@
 // ut
 //
 #include <ut/string.hpp>
+#include <ut/func/delegate.hpp>
+
 
 //
 // std
@@ -19,19 +21,25 @@ namespace sh
     public:
         std::string prompt = "$ ";
 
+        using debug_func_type = ut::func<std::string(std::string const&)>;
+        debug_func_type debug;
+
+        ut::func<void()> on_line_changed;
+        ut::func<void()> on_tab;
+
         static Shell& instance();
 
         Shell();
 
-        inline bool loaded() const { return m_loaded; }
-
-        void load();
-        void unload();
-
         bool getLine(std::string& line);
-        void addHistory(ut::strparam line);
+
+        inline std::string const& lineBuffer() const
+        { return m_line_buffer; }
+
+
 
     private:
+        std::string m_line_buffer;
         bool m_loaded;
     };
 

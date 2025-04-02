@@ -1,37 +1,20 @@
 #include "builtins.hpp"
 #include "command.hpp"
-#include "user_input.hpp"
 #include "shell.hpp"
+#include "scanner.hpp"
 using namespace sh;
 
 
 #include <iostream>
 #include <cstdlib>
 #include <span>
-#include <charconv>
-#include <array>
 #include <cstdio>
 #include <dirent.h>
-#include <sys/wait.h>
-#include <sstream>
 using namespace std;
 
 #include <ut/string.hpp>
 #include <ut/check.hpp>
 using namespace ut;
-
-//
-// linenoise
-//
-extern "C"
-{
-    #include "linenoise.h"
-}
-
-//
-// rang
-//
-#include "rang.hpp"
 
 
 /// return false if shell should stop
@@ -52,58 +35,6 @@ bool eval(Command & c)
 
     return false;
 }
-
-static const auto SHELL_PREFIX = string("$ ");
-
-
-
-#if 0
-int linenoiseHistoryAdd(const char *line);
-int linenoiseHistorySetMaxLen(int len);
-int linenoiseHistorySave(const char *filename);
-int linenoiseHistoryLoad(const char *filename);
-#endif
-
-#include "scanner.hpp"
-using namespace sh;
-
-#if 0
-int main()
-{
-    linenoiseHistorySetMaxLen(1000);
-
-    // std::vector<std::string> test_commands = {
-    //     "ls -l",
-    //     "echo 'Hello, world!'",
-    //     "echo \"Hello, world!\"",
-    //     "echo \"Escaped \\\" quote\"",
-    //     "echo 'Single quoted string with spaces'",
-    //     "echo \"Special chars: $HOME `date`\"",
-    //     "grep 'pattern with spaces' file.txt",
-    //     "echo \"Backslash at end\\\""
-    // };
-
-    char* line = nullptr;
-    while ((line = linenoise("$ ")) != nullptr)
-    {
-        try {
-            ShellParser parser(line);
-            auto ast = parser.parse();
-
-            std::cout << "Parsing command: " << line << std::endl;
-            ast->print(std::cout);
-            std::cout << "\n---\n";
-
-            linenoiseHistoryAdd(line);
-
-        } catch (const std::exception& e) {
-            std::cerr << "Error parsing '" << line << "': " << e.what() << std::endl;
-        }
-    }
-
-    return 0;
-}
-#endif
 
 bool tryMakeCommand(strparam s, Command& c)
 {
@@ -142,18 +73,27 @@ bool tryMakeCommand(strparam s, Command& c)
 
 int main()
 {
-    SHELL.load();
+
+    SHELL.on_tab = fn([]
+    {
+
+    });
+
+    SHELL.on_line_changed = fn([]
+    {
+
+    });
+
 
     string line;
     while(SHELL.getLine(line))
     {
         if (Command c; tryMakeCommand(line, c))
         {
-            if (eval(c))
-                SHELL.addHistory(line);
+            eval(c);
         }
     }
 
-    SHELL.unload();
+
     return EXIT_SUCCESS;
 }

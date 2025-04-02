@@ -67,4 +67,9 @@ SH_EXPAND_ENUM_BUILTINS
 SH_EXPAND_ENUM_BUILTINS
 #undef BUILTIN
     };
+
+    //
+    // helpers
+    //
+
 }

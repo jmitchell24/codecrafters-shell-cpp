@@ -19,7 +19,12 @@ add_executable(shell ${SOURCE_FILES}
         src/command.hpp
         src/command.cpp
         src/shell.hpp
-        src/shell.cpp)
+        src/shell.cpp
+        src/autocomplete.hpp
+        src/autocomplete.cpp
+        src/escapes.hpp
+        src/path.hpp
+        src/path.cpp)
 
 include(FetchContent)
 
